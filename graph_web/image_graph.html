@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!-- This code is for demonstration purposes only.  You should not hotlink to Github, Rawgit, or files from the Cytoscape.js documentation in your production apps. -->
+<html>
+
+    <head>
+        <link href="cytoscape-context-menus.css" rel="stylesheet"
+            type="text/css" />
+        <link href="css/bootstrap.min.css" rel='stylesheet' />
+        <link href="style.css" rel="stylesheet" />
+
+        <meta charset=utf-8 />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1.0,
+            minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+        <title>Images</title>
+        <script src="jquery-3.4.1.min.js"></script>
+        
+        <script src="cytoscape.min.js"></script>
+        <script src="dagre.min.js"></script>
+        <script src="cytoscape-dagre.js"></script>
+        <script src="cytoscape-klay.js"></script>
+        <script src="cytoscape-node-html-label.min.js"></script>
+        <script src="cytoscape-context-menus.js"></script>
+        <script src="cytoscape-cxtmenu.js"></script>
+        <script src="js/bootstrap.bundle.min.js"></script>
+
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+            
+                    <div id="session_loss_plot">
+                        Session Loss Plot (TODO)
+                    </div>
+                    <div id="state_details">
+                        Current State Details
+                        <table class="table table-sm">
+                            <thead>
+                            <tr>
+                                <th>
+                                    id
+                                </th>
+                                
+                                <th>
+                                    epoch
+                                </th>
+                                
+                                <th>
+                                    iteration
+                                </th>
+                                </tr>
+                            </thead>
+                            <tr>
+                                <td>
+                                    0_2
+                                </td>
+                                <td>
+                                    0
+                                </td>
+                                <td>
+                                    2
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+
+                <div class="col-sm-8">
+
+                    <!-- graph : start -->
+
+                    <div id="cy-container">
+                        <div id="cy"></div>
+                    </div>
+
+                    <!-- graph : end -->
+
+                </div>
+
+                <div class="col-sm-4">
+
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col">
+                                <h5>Controls</h5>
+
+
+                                <div  class="form-group">
+
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                          <label class="input-group-text" for="inputGroupSelect01">Node Size:</label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn
+                                            btn-outline-primary" id="node_size_fit_btn">Fit</button>
+                                            <button type="button" class="btn
+                                            btn-outline-primary" id="node_size_fixed_btn">Fixed</button>
+                                        </div>
+
+                                      </div>
+
+
+                                      <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                          <label class="input-group-text" for="inputGroupSelect01">Label Size:</label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-secondary" id="font_minus_btn">-</button>
+                                            <button type="button" class="btn btn-secondary" id="font_plus_btn">+</button>
+                                       
+                                        </div>
+
+                                      </div>
+
+
+                                      <div class="input-group mb-3">
+                                        <!-- <div class="input-group-prepend">
+                                          <label class="input-group-text" for="inputGroupSelect01">Label Size:</label>
+                                        </div> -->
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn
+                                            btn-primary" id="default_view_btn">Reset View</button>
+                                       
+                                            <button type="button" class="btn
+                                            btn-primary" id="reset_graph_btn">Reset Graph</button>
+                                        </div>
+
+                                      </div>
+
+
+
+                                      <div class="input-group mb-3">
+
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn
+                                            btn-secondary"
+                                            id="show_params_only_btn">Show Params
+                                            Only</button>
+                                        </div>
+
+                                      </div>
+
+
+
+                                <div  class="form-group">
+
+                                <div class="btn-toolbar">
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary
+                                            dropdown-toggle" type="button"
+                                            id="dropdownMenuButton"
+                                            data-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false">
+                                            Change Layout
+                                        </button>
+                                        <div class="dropdown-menu"
+                                            aria-labelledby="dropdownMenuButton">
+                                            <a class="dropdown-item" href="#"
+                                                id="layout_btn_grid">Grid</a>
+                                            <a class="dropdown-item" href="#"
+                                                id="layout_btn_dagre">Dagre</a>
+                                            <a class="dropdown-item" href="#"
+                                                id="layout_btn_cose">Cose</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                                <div  class="form-group">
+                                <h6>Node View Type</h6>
+
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="radio" value=""
+                                        name="radio_node_view">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Image/Heatmap</label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="radio" value=""
+                                        name="radio_node_view">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Dist Plot</label>
+                                </div>
+                            </div>
+                            <div  class="form-group">
+
+                                <h6>Node Data Content</h6>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Parameter Value</label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Parameter Gradient</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Non Parameter Value</label>
+                                </div>
+                            </div>
+
+                            <div  class="form-group">
+
+                                <h6>Node Label Content</h6>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Image/Plot</label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Id</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox" value=""
+                                        id="defaultCheck1">
+                                    <label class="form-check-label"
+                                        for="defaultCheck1">Name</label>
+                                </div>
+                            </div>
+
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div id="node_info">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+            </div>
+        </div>
+        <!-- container-fluid : end -->
+        <script src="code.js"></script>
+        
+        <!-- Load application code at the end to ensure DOM is loaded -->
+    </body>
+
+</html>

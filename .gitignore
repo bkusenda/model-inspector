@@ -1,0 +1,4 @@
+__pycache__/
+graph_web/session_data/
+graph_web/node_modules/
+.vscode/
