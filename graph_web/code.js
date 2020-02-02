@@ -1,7 +1,6 @@
 //https://github.com/kaluginserg/cytoscape-node-html-label
 //https://stackoverflow.com/questions/40261292/put-a-cytoscape-graph-inside-a-bootstrap-column
 
-
 var win = $(window);
 
 win.resize(function() {
@@ -32,7 +31,7 @@ var edgeOptions = {
 };
 var session_path = "session_data";
 var session_id = "test";
-var state_id = "0_2";
+var state_id = "0_4";
 
 //STORAGE HELPERS
 var defaultSettings={
@@ -40,7 +39,8 @@ var defaultSettings={
   'cy-font-size':20,
   'cy-node-width':100,
   'cy-node-height':100,
-  'active_image': 'param'
+  'active_image': 'param',
+  'node_render_type': 'fit',
   
 }
 
@@ -65,12 +65,12 @@ function getLayoutConfig(name) {
     name: name,//grid?, dagre
     animate: false,
     directed: true,
-    padding: 30,
+    padding: 50,
     // marginy:'500',
     fit: true,
-    nodeOverlap: 1,
-    spacingFactor: 1.2,
-
+    // nodeOverlap: 2,
+    spacingFactor: 1.5,
+    // name: 'cola',
     // }
   };
 }
@@ -90,7 +90,7 @@ const refreshLayout = async => {
 
 // CREATE GRAPH
 
-const initGraph = (state_id)=>{
+const initGraph = (state_id)=> {
   var cy = window.cy = cytoscape({
     container: document.getElementById('cy'),
 
@@ -112,7 +112,7 @@ const initGraph = (state_id)=>{
       })
       .selector('edge')
       .css({
-        // 'curve-style': 'unbundled-bezier',
+        'curve-style': 'bezier',
         // "control-point-distances": [40, -40],
         // "control-point-weights": [0.250, 0.75],
         'width': 2,
@@ -127,7 +127,7 @@ const initGraph = (state_id)=>{
   return cy;
 }
 
-initGraph("0_2");
+initGraph(state_id);
 
 
 
@@ -140,6 +140,7 @@ const renderNodeImages = async (state_id) => {
       'height': getStorageValue('cy-node-height',defaultSettings['cy-node-height']),
       'width': getStorageValue('cy-node-width',defaultSettings['cy-node-width']),
       'font-size': getStorageValue('cy-font-size',defaultSettings['cy-font-size']),
+      'background-fit':'cover'
     }).update();
   }
 
@@ -168,7 +169,7 @@ const renderNodeImages = async (state_id) => {
             src = component_info[comp]['img']['param'].src;
             image_heights.push(nheight);
             image_widths.push(nwidth);
-            image_links.push(`url(${src}) top ${last_vert}px no-repeat`);
+            image_links.push(`url(${src})`);
             last_vert = nheight+last_vert;
         
           
@@ -187,7 +188,7 @@ const renderNodeImages = async (state_id) => {
 
     if (image_widths.length >0){
       style_update['width'] = Math.max(...image_widths);
-      //node.style('width',nwidth);
+      node.style('width',nwidth);
     }
 
     if (image_heights.length >0){
@@ -198,13 +199,13 @@ const renderNodeImages = async (state_id) => {
 
       }
       style_update['height'] = total_height;
-      //node.style('width',nwidth);
+      node.style('width',nwidth);
     }
-    var fixed = getStorageValue('node_render_type','fit') != 'fixed'
+    var fixed = getStorageValue('node_render_type',defaultSettings['node_render_type']) != 'fixed'
 
     if (image_links.length>0){
      // console.log(image_links);
-      style_update['background-image'] = image_links[0];//.join(", ");
+      style_update['background-image'] = image_links.join(", ");
       // style_update['background-position'] = image_pos.join(", ");
 
       
@@ -338,11 +339,11 @@ function makeImage(src){
 const updateNodeInfo = async (node,state) =>{
 
   promise_list = [];
-  components = node.data().components;
+  component_ids = node.data().component_ids;
   var component_info = {};
-  for (i=0;i<components.length;i++){
-    if (components[i] in state['data']) {
-      comp = components[i];
+  for (i=0;i<component_ids.length;i++){
+    if (component_ids[i] in state['data']) {
+      comp = component_ids[i];
       component_info[comp] = state['data'][comp];
       component_info[comp]['img'] = {}
 
@@ -379,17 +380,20 @@ const loadState = async (state_id) => {
 const backupInitState = async () => {
   cy.orig_elements = cy.elements().clone();  
 }
-
+console.log(state_id);
 
 cy.ready(() => {
   // cy.container().insertBefore(build_menu());   
-  state_id = "0_2";
+
   localStorage.clear();
+  console.log(state_id);
   loadState(state_id).then
   (function(){backupInitState();}).then
   (function(){renderNodeImages(state_id)}).then
   (function(){updateStyle()}).then
   (function(){  updateLayout("grid")});
+  console.log(state_id);
+
 
 
 //   cy.style()
@@ -432,11 +436,11 @@ cy.on('click', 'node', function(evt) {
     <tr><td>Shape: (${component_info[comp].shape})</td></tr>
     `;    
     if (component_info[comp]['data_group_type'] == "PARAM"){
-      component_html += `<tr><td>Value:<div class="img-holder"> <img src="0_2/${comp}_param__image.jpg"/></div></td></tr>`;
-      component_html += `<tr><td>Gradient: <img src="0_2/${comp}_grad__image.jpg" width="300px" /></td></tr>`;
+      component_html += `<tr><td>Value:<div class="img-holder"> <img src="${session_path}/${session_id}/${state_id}/${comp}_param__image.jpg"/></div></td></tr>`;
+      component_html += `<tr><td>Gradient: <img src="${session_path}/${session_id}/${state_id}/${comp}_grad__image.jpg" width="300px" /></td></tr>`;
     }
     else if (component_info[comp]['data_group_type'] == "BUFFER"){
-      component_html += `<tr><td>Value: <img src="0_2/${comp}_tensor__image.jpg" width="300px" /></td></tr>`;
+      component_html += `<tr><td>Value: <img src="${session_path}/${session_id}/${state_id}/${comp}_tensor__image.jpg" width="300px" /></td></tr>`;
     }
 
 
@@ -456,7 +460,7 @@ cy.on('click', 'node', function(evt) {
     current_font_size = getStorageValue('cy-font-size',defaultSettings['cy-font-size']);
     new_font_size = parseInt(current_font_size) + 10;
     setStorageValue('cy-font-size',new_font_size);
-     renderNodeImages('0_2');
+     renderNodeImages(state_id);
     // console.log(new_font_size);
     //   cy.style()
     //   .selector('node')
@@ -470,7 +474,7 @@ cy.on('click', 'node', function(evt) {
     current_font_size = getStorageValue('cy-font-size',defaultSettings['cy-font-size']);
     new_font_size = parseInt(current_font_size) - 10;
     setStorageValue('cy-font-size',new_font_size);
-    renderNodeImages('0_2');
+    renderNodeImages(state_id);
   //   cy.style()
   //   .selector('node')
   //   .css({
@@ -490,12 +494,12 @@ document.getElementById("layout_btn_cose").addEventListener("click",() =>{
 });
 
 
+
 document.getElementById("default_view_btn").addEventListener("click",() =>{
   cy.fit();
 });
 
 document.getElementById("reset_graph_btn").addEventListener("click",() =>{
-  state_id='0_2';
   setStorageValue('cy-font-size',defaultSettings['cy-font-size']);
   restoreElements().then(function(){renderNodeImages(state_id);}).
   then(function(){updateStyle();}).
@@ -513,13 +517,11 @@ document.getElementById("show_params_only_btn").addEventListener("click",() =>{
 
 document.getElementById("node_size_fit_btn").addEventListener("click",() =>{
   setStorageValue('node_render_type','fit');
-  state_id = "0_2";
   renderNodeImages(state_id).then(updateStyle).then(refreshLayout);
 });
 
 document.getElementById("node_size_fixed_btn").addEventListener("click",() =>{
   setStorageValue('node_render_type','fixed');
-  state_id = "0_2";
   setStorageValue('cy-font-size',defaultSettings['cy-font-size']);
   renderNodeImages(state_id).then(updateStyle).then(refreshLayout);
 });
