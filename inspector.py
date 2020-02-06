@@ -1,5 +1,12 @@
 from .vis_utils import build_net_image
-from .modelgraph import ModelGraph
+from .modelgraph import ModelGraph, \
+    DataGroupType_BUFFER, \
+    DataGroupType_INPUT, \
+    DataGroupType_LABEL, \
+    DataGroupType_LOSS, \
+    DataGroupType_OUTPUT, \
+    DataGroupType_PARAM, \
+    DataGroupType_UNKNOWN
 import cv2
 import time
 import inspect
@@ -15,13 +22,6 @@ from scipy import stats
 
 from enum import Enum
 
-# Enums are worthless so using this instead
-DataGroupType_PARAM = "PARAM"
-DataGroupType_BUFFER = "BUFFER"
-DataGroupType_INPUT = "INPUT"
-DataGroupType_OUTPUT = "OUTPUT"
-DataGroupType_LOSS = "LOSS"
-DataGroupType_LABEL = "LABEL"
 
 stats_suffix = "__stats"
 
@@ -32,8 +32,8 @@ def apply_function_to_states(
         source1,
         target,
         included_data_groups_types = [DataGroupType_PARAM],
-        value_name0='param',  # param or grad
-        value_name1='param',
+        value_name0='tensor',  # param or grad
+        value_name1='tensor',
         fn=compute_delta_fn,
         target_value_name='param_delta'):
     for data_name0,data0 in source1['data'].items():
@@ -110,9 +110,9 @@ class Inspector:
             data['data_group_type'] = DataGroupType_PARAM
             data['internal_type'] = type(entity)
             data['value'] = {}
-            data['value']['param'] = entity.data.cpu().numpy()
+            data['value']['tensor'] = entity.data.cpu().numpy()
             data['value']['grad'] = entity.grad.data.cpu().numpy()
-            data['shape'] = data['value']['param'].shape
+            data['shape'] = data['value']['tensor'].shape
             state['data'][eid] = data
 
         # BUFFERS
@@ -156,8 +156,8 @@ class Inspector:
                                 state,
                                 target=state,
                                 included_data_groups_types= [DataGroupType_PARAM],
-                                value_name0='param',
-                                value_name1='param',
+                                value_name0='tensor',
+                                value_name1='tensor',
                                 fn=compute_delta_fn,
                                 target_value_name='first_delta')
 
@@ -232,10 +232,10 @@ def build_state_images(
         image_data = {}
         if group_data['data_group_type'] is DataGroupType_PARAM:    
             #param
-            param_stats = group_data['value']['param{}'.format(stats_suffix)] #TODO, use global stats
-            image_data["param__image"] = tensor_to_image(
-                val = group_data['value']['param'],
-                vstats = param_stats)
+            param_stats = group_data['value']['tensor{}'.format(stats_suffix)] #TODO, use global stats
+            image_data["tensor_image"] = tensor_to_image(
+                val = group_data['value']['tensor'],
+                vstats = tensor_stats)
             #grad
             grad_stats = group_data['value']['grad{}'.format(stats_suffix)] #TODO, use global stats
             image_data["grad__image"] = tensor_to_image(

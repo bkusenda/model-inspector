@@ -8,7 +8,7 @@ win.resize(function() {
 });
 
 function resize() {
-  console.log(win.height(), win.innerHeight());
+  // console.log(win.height(), win.innerHeight());
   $("#cy-container").height(win.innerHeight() - 130);
   cy.resize();
 }
@@ -29,35 +29,113 @@ var edgeOptions = {
     lineColor: 'yellow'
   }
 };
-var session_path = "session_data";
-var session_id = "test";
-var state_id = "0_4";
+
 
 //STORAGE HELPERS
-var defaultSettings={
+var defaultScalars={
   'cy-layout':'grid',
-  'cy-font-size':20,
-  'cy-node-width':100,
-  'cy-node-height':100,
-  'active_image': 'param',
+  'cy-font-size':55,
+  'cy-node-width':300,
+  'cy-node-height':300,
+  'cy-edge-size':10,
+  'active_image': 'tensor',
   'node_render_type': 'fit',
-  
+  'session_path' :"session_data",
+  'session_id': "test",
+  'state_id' :"0_0",
+  'current_image_type':'dist',
+  'nonParamNodeSelector': 'node[label="Add"],node[label="Flatten"],node[label="MaxPool"],node[label="Relu"]'
 }
 
-function getStorageValue(key,defaultValue){
-  if (localStorage.getItem(key)) {
-    return localStorage.getItem(key);
-  }
-  else {
-    return setStorageValue(key,defaultValue)
-  }
+var defaultJSON={
+  'image_types' :['heatmap','dist'],
+  'valid_data_group_types' :[['PARAM','tensor'],['PARAM','grad'],['BUFFER','tensor'],['INPUT','tensor'],['OUTPUT','tensor']],
+  'current_data_group':['PARAM','tensor']
 }
 
-function setStorageValue(key, value){
+function isJSONValue(key){
+  return (key in defaultJSON);
+}
+
+function setScalarValue(key, value){
   localStorage.setItem(key,value);
   return value;
 }
 
+//get/set SCALAR
+function getScalarValue(key,defaultValue = null){
+  //(key)
+  if (defaultValue == null){
+    defaultValue = defaultScalars[key];
+  }
+  storageValue = localStorage.getItem(key)
+  if (storageValue) {
+    return storageValue;
+  }
+  else {
+    return setScalarValue(key,defaultValue)
+  }
+}
+
+
+
+
+function setJSONValue(key, value){
+  localStorage.setItem(key,JSON.stringify(value));
+  return value;
+}
+//get/set JSON
+function getJSONValue(key,defaultValue = null){
+  if (defaultValue == null){
+    defaultValue = defaultJSON[key];
+  }
+  var storageValue = localStorage.getItem(key)
+  if (storageValue) {
+    return JSON.parse(storageValue)
+  }
+  else {
+    return setJSONValue(key,defaultValue)
+  }
+}
+
+
+
+// get/set storage (USE THIS)
+function getStorageValue(key,defaultValue = null){
+
+  if (isJSONValue(key)){
+    return getJSONValue(key,defaultValue)
+  }
+  else{
+    return getScalarValue(key,defaultValue)
+  }
+}
+
+
+function setStorageValue(key, value){
+  if (isJSONValue(key)){
+    return setJSONValue(key,value)
+  }
+  else{
+    return setScalarValue(key,value)
+  }
+}
+
+function getDefaultValue(key){
+  if (isJSONValue(key)) {
+    return defaultJSON[key];
+  }
+  else{
+    return defaultScalars[key];
+  }
+}
+
+
+
+function getStatePath(){
+  return `${getStorageValue('session_path')}/${getStorageValue('session_id')}/${getStorageValue('state_id')}`;
+
+}
 
 //LAYOUT HELPERS
 function getLayoutConfig(name) {
@@ -65,11 +143,11 @@ function getLayoutConfig(name) {
     name: name,//grid?, dagre
     animate: false,
     directed: true,
-    padding: 50,
+   // padding: 50,
     // marginy:'500',
     fit: true,
     // nodeOverlap: 2,
-    spacingFactor: 1.5,
+    spacingFactor: 1.2,
     // name: 'cola',
     // }
   };
@@ -79,18 +157,22 @@ const updateLayout = async (name) => {
   layoutConfig = getLayoutConfig(name);
   layout = cy.layout(layoutConfig);
   layout.run();
-  setStorageValue('current_layout_name',name);
+  setScalarValue('current_layout_name',name);
+
 }
 
 const refreshLayout = async => {
   current_layout_name = getStorageValue('current_layout_name','grid');
   updateLayout(current_layout_name);
+
 }
 
 
 // CREATE GRAPH
 
-const initGraph = (state_id)=> {
+const initGraph = ()=> {
+  localStorage.clear();
+
   var cy = window.cy = cytoscape({
     container: document.getElementById('cy'),
 
@@ -101,173 +183,101 @@ const initGraph = (state_id)=> {
       .selector('node')
       .css({
         'background-fit': 'cover',
-        //  'background-repeat':'repeat-y',
+        'height': getStorageValue('cy-node-height'),
+        'width': getStorageValue('cy-node-width'),
+        'font-size': getStorageValue('cy-font-size'),
         'border-color': '#000',
-        'border-width': 3,
+        'border-width': 5,
         'border-opacity': 0.5,
         'content': 'data(label)',
         'shape': 'square',
-        'font-size': getStorageValue('cy-font-size',defaultSettings['cy-font-size']),
-        // 'background-image': 'https://live.staticflickr.com/3063/2751740612_af11fb090b_b.jpg'
+        'font-size': getStorageValue('cy-font-size'),
+        'background-color': '#DDD',
       })
       .selector('edge')
       .css({
         'curve-style': 'bezier',
         // "control-point-distances": [40, -40],
         // "control-point-weights": [0.250, 0.75],
-        'width': 2,
+        'width': getStorageValue('cy-edge-size'),
         'target-arrow-shape': 'triangle',
+        'opacity': 0.5,
         'line-color': '#666666',
         'target-arrow-color': '#555555'
       }),
 
-    elements: $.getJSON(`${session_path}/${session_id}/${state_id}/graph.json`),
+    elements: $.getJSON(`${getStatePath()}/graph.json`),
     layout: getLayoutConfig('grid')
   });
   return cy;
 }
 
-initGraph(state_id);
+initGraph();
 
 
 
-const renderNodeImages = async (state_id) => {
+const renderNodeImages = async () => {
 
 
   if (getStorageValue('node_render_type','fit') == 'fixed'){
     //if fixed, use this
     cy.style().selector('node').css({
-      'height': getStorageValue('cy-node-height',defaultSettings['cy-node-height']),
-      'width': getStorageValue('cy-node-width',defaultSettings['cy-node-width']),
-      'font-size': getStorageValue('cy-font-size',defaultSettings['cy-font-size']),
+      'height': getStorageValue('cy-node-height'),
+      'width': getStorageValue('cy-node-width'),
+      'font-size': getStorageValue('cy-font-size'),
       'background-fit':'cover'
     }).update();
   }
 
   cy.style().selector('node').css({
-    'font-size': getStorageValue('cy-font-size',defaultSettings['cy-font-size']),
+    'font-size': getStorageValue('cy-font-size'),
   }).update();
 
-  return  await Promise.all(cy.nodes().map(function(node){
-    component_info = node.data().component_info;
-    var image_heights = [];
-    var image_widths = [];
-    var image_links = [];
-    var last_vert = 0;
-    var image_pos = [];
-
-    for (var comp in component_info){
-
-      if (comp in component_info && (component_info[comp]['data_group_type'] == "PARAM")){
-//        src=`${state_id}/${comp}_param__image.jpg`;
-        // node.style('background-image',src);
-        if ('img' in component_info[comp]){
-
-            
-            nwidth = component_info[comp]['img']['param'].width;
-            nheight = component_info[comp]['img']['param'].height;
-            src = component_info[comp]['img']['param'].src;
-            image_heights.push(nheight);
-            image_widths.push(nwidth);
-            image_links.push(`url(${src})`);
-            last_vert = nheight+last_vert;
-        
-          
-        }
-
-      }
-    }
-
-    var style_update = {};
-    if (image_heights.length >0){
-      fsize = Math.max(Math.max(...image_heights) * 0.2,  
-      getStorageValue('cy-font-size',defaultSettings['cy-font-size']));
-      //node.style('font-size',fsize);
-      style_update['font-size'] = fsize
-    }
-
-    if (image_widths.length >0){
-      style_update['width'] = Math.max(...image_widths);
-      node.style('width',nwidth);
-    }
-
-    if (image_heights.length >0){
-      total_height = 0;
-      for(i =0;i<image_heights.length;i++){
+  var current_image_type = getStorageValue('current_image_type');
+  var current_data_group = getStorageValue('current_data_group');
   
-        total_height = total_height + Math.max(image_heights[i],10);
 
-      }
-      style_update['height'] = total_height;
-      node.style('width',nwidth);
-    }
-    var fixed = getStorageValue('node_render_type',defaultSettings['node_render_type']) != 'fixed'
+  var updated_stuff = await Promise.all(cy.nodes().map(function(node) {
+    ndata = node.data();
+    if (current_image_type in ndata.image_info && current_data_group in ndata.image_info[current_image_type]) {
 
-    if (image_links.length>0){
-     // console.log(image_links);
-      style_update['background-image'] = image_links.join(", ");
-      // style_update['background-position'] = image_pos.join(", ");
-
-      
-      //node.style('background-image',image_links.join(","))
-      node.removeStyle();
+      var img = ndata.image_info[current_image_type][current_data_group]
+      style_update={};
+      style_update['height'] = img.height;
+      style_update['width'] = img.width;
+      style_update['background-image'] = img.src;
       node.style(style_update);
-
     }
-    else {
-      
-    }
-
-     
-
   }));
 
 
-  
-
-  // return cy.style().selector('node').css({
-  //     'font-size': Math.max(...max_values)/2,
-  //   }).update();
-
-} 
-
+  return updated_stuff;
+}
+    
 const updateStyle = async () => {
 
   cy.style()
   .selector('node')
   .css({
-    //'font-size': getStorageValue('cy-font-size',defaultSettings['cy-font-size']),
-    'border-color': '#000',
-    'border-width': 3,
-    'border-opacity': 0.5,
+    'height': getStorageValue('cy-node-height'),
+    'width': getStorageValue('cy-node-width'),
+    'font-size': getStorageValue('cy-font-size'),
     'content': 'data(label)',
     'shape': 'square',
-    // 'background-image': 'https://live.staticflickr.com/3063/2751740612_af11fb090b_b.jpg'
   })
-  .selector('node[label="Add"]')
+  .selector(getStorageValue('nonParamNodeSelector'))
   .css({
-    'height': 20,
-    'width': 20,
+    'height': 200,
+    'width': 200,
     'shape': 'diamond',
-    //'visibility':'hidden'
-  })
-  .selector('node[label="Relu"]')
-  .css({
-    'height': 20,
-    'width': 20,
-    'shape': 'diamond',
-    //'visibility':'hidden'
-  })
-  .selector('node[label="Flatten"],node[label="MaxPool"]')
-  .css({
-    'height': 20,
-    'width': 20,
-    'shape': 'diamond',
-    //'visibility':'hidden'
   }).update();
 
-  cy.nodes().leaves().style({ 'border-color': '#F00' });
-  cy.nodes().roots().style({ 'border-color': '#0F0' });
+  cy.nodes().leaves().style({ 
+    'border-width': 20,
+    'border-color': '#F00' });
+  cy.nodes().roots().style({
+    'border-width': 20,
+     'border-color': '#0F0' });
 }
 
 const skipNode = async (node) => {
@@ -313,16 +323,6 @@ const restoreElements = async () => {
   cy.elements().remove(); cy.add( cy.orig_elements );
 }
 
-
-// const checkImage = path =>
-//     new Promise(resolve => {
-//         const img = new Image();
-//         img.onload = () => resolve({path, status: 'ok'});
-//         img.onerror = () => resolve({path, status: 'error'});
-
-//         img.src = path;
-//     });
-
 const loadImage = img =>
     new Promise(resolve => {
         img.onload = () => resolve(img);
@@ -339,37 +339,42 @@ function makeImage(src){
 const updateNodeInfo = async (node,state) =>{
 
   promise_list = [];
-  component_ids = node.data().component_ids;
+  ndata = node.data()
+  component_ids = ndata.component_ids;
+
+  var image_info ={}
+  getStorageValue('image_types').forEach(function(img_type){image_info[img_type]={}});
   var component_info = {};
+  var dgts_avail = new Set();
   for (i=0;i<component_ids.length;i++){
     if (component_ids[i] in state['data']) {
       comp = component_ids[i];
       component_info[comp] = state['data'][comp];
-      component_info[comp]['img'] = {}
-
-      if (component_info[comp]['data_group_type'] == "PARAM"){
-        component_info[comp]['img']['param'] = makeImage(`${session_path}/${session_id}/${state.id}/${comp}_param__image.jpg`)
-        component_info[comp]['img']['grad'] = makeImage(`${session_path}/${session_id}/${state.id}/${comp}_grad__image.jpg`)
-        //console.log(img.src)
-        promise_list.push(loadImage(component_info[comp]['img']['param']))
-        promise_list.push(loadImage(component_info[comp]['img']['grad']))
-        
-      }
-      // else if (component_info[comp]['data_group_type'] == "BUFFER"){
-      //   component_info[comp]['img']['tensor'] = makeImage(`${state_id}/${comp}_tensor__image.jpg`)       
-      // }
+      dgts_avail.add(component_info[comp]['data_group_type'])
 
     }
   }
+  
+  getStorageValue('valid_data_group_types').forEach(function(item,index){
+    dgt = item[0]
+    vt = item[1]
+    if (dgts_avail.has(dgt)){
+      getStorageValue('image_types').forEach(function(image_type,index2){
+        var image_path = `${getStatePath()}/images/${ndata.id}_${dgt}_${vt}__${image_type}.jpg`
+        var img = makeImage(image_path)
+        image_info[image_type][[dgt,vt]] = img
+        promise_list.push(loadImage(img))
+      });
+    }
+
+  });
   node.data('component_info',component_info);
+  node.data('image_info',image_info);
   return await Promise.all(promise_list);
 }
 
-const loadState = async (state_id) => {
-  console.log(state_id);
-  var state = await $.getJSON(`${session_path}/${session_id}/${state_id}/state.json`)
-
-
+const loadState = async () => {
+  var state = await $.getJSON(`${getStatePath()}/state.json`)
   return await Promise.all(cy.nodes().map(function(node){
     return updateNodeInfo(node,state);  
   }));
@@ -380,32 +385,38 @@ const loadState = async (state_id) => {
 const backupInitState = async () => {
   cy.orig_elements = cy.elements().clone();  
 }
-console.log(state_id);
+
+function updateRadioButtons(eleData, currVal){
+  for (let [elName, elValue] of Object.entries(eleData)) {
+    if (currVal == elValue){
+      document.getElementById(elName).checked = true;
+    }
+  }
+}
+
+
+var dataViewElData = {
+  view_buffer_btn: 'BUFFER_tensor',
+  view_grad_btn: 'PARAM_grad',
+  view_param_btn: 'PARAM_tensor'
+}
+
+var imageTypeElData = {
+  dist_radio_btn: 'dist',
+  heatmap_radio_btn: 'heatmap'
+}
+
+
 
 cy.ready(() => {
-  // cy.container().insertBefore(build_menu());   
 
-  localStorage.clear();
-  console.log(state_id);
-  loadState(state_id).then
+  loadState().then
   (function(){backupInitState();}).then
-  (function(){renderNodeImages(state_id)}).then
+  (function(){renderNodeImages()}).then
   (function(){updateStyle()}).then
-  (function(){  updateLayout("grid")});
-  console.log(state_id);
-
-
-
-//   cy.style()
-//   .selector('node')
-//     .style({
-//       'background-color': 'yellow',
-//        'label':"data(id)",
-//       // 'content': "data(id)"
-//     }).update()
-
-// ;
-
+  (function(){updateLayout("grid")});
+  updateRadioButtons(imageTypeElData,getStorageValue('current_image_type'));
+  updateRadioButtons(dataViewElData,getStorageValue('current_data_group').join("_"));
 
 });
 
@@ -423,11 +434,19 @@ cy.on('click', 'node', function(evt) {
   <tr><td>Node ID: ${node_data.id}</td></tr>
   <tr><td>Operation: ${node_data.label}</td></tr>
   </table>
-  <hr/>
-  <h6>Components</h6>
   `;
   html_list.push(head_html);
 
+  for (let [image_type, image_data] of Object.entries(node_data.image_info)) {
+    for (let [value_type, img] of Object.entries(image_data)) {
+      html_list.push(`<div class="img-holder"> <img src="${img.src}"/></div>`);
+
+    }
+  } 
+
+  html_list.push('<hr/>');
+  html_list.push('<h6>Components</h6>');
+  
   for (var comp in component_info){
     component_html = `
     <table class="table table-sm">
@@ -435,21 +454,15 @@ cy.on('click', 'node', function(evt) {
     <tr><td>Type: ${component_info[comp].data_group_type}</td></tr>
     <tr><td>Shape: (${component_info[comp].shape})</td></tr>
     `;    
-    if (component_info[comp]['data_group_type'] == "PARAM"){
-      component_html += `<tr><td>Value:<div class="img-holder"> <img src="${session_path}/${session_id}/${state_id}/${comp}_param__image.jpg"/></div></td></tr>`;
-      component_html += `<tr><td>Gradient: <img src="${session_path}/${session_id}/${state_id}/${comp}_grad__image.jpg" width="300px" /></td></tr>`;
-    }
-    else if (component_info[comp]['data_group_type'] == "BUFFER"){
-      component_html += `<tr><td>Value: <img src="${session_path}/${session_id}/${state_id}/${comp}_tensor__image.jpg" width="300px" /></td></tr>`;
-    }
-
-
+ 
     component_html += "</table>"
     html_list.push(component_html);
 
   }
   
-  document.getElementById("node_info").innerHTML = html_list.join("") + "<br/>"+ JSON.stringify(this.data(), undefined, 2);
+  html_list.push('<br/>')
+  html_list.push(JSON.stringify(this.data(), undefined, 2))
+  document.getElementById("node_info").innerHTML = html_list.join("");
 
   
 });
@@ -457,29 +470,18 @@ cy.on('click', 'node', function(evt) {
 
 
   document.getElementById("font_plus_btn").addEventListener("click",() =>{
-    current_font_size = getStorageValue('cy-font-size',defaultSettings['cy-font-size']);
+    current_font_size = getStorageValue('cy-font-size');
     new_font_size = parseInt(current_font_size) + 10;
-    setStorageValue('cy-font-size',new_font_size);
-     renderNodeImages(state_id);
-    // console.log(new_font_size);
-    //   cy.style()
-    //   .selector('node')
-    //   .css({
-    //     'font-size': new_font_size,
-    // }).update();
+    setScalarValue('cy-font-size',new_font_size);
+    renderNodeImages();
   });
 
 
   document.getElementById("font_minus_btn").addEventListener("click",() =>{
-    current_font_size = getStorageValue('cy-font-size',defaultSettings['cy-font-size']);
+    current_font_size = getStorageValue('cy-font-size');
     new_font_size = parseInt(current_font_size) - 10;
-    setStorageValue('cy-font-size',new_font_size);
-    renderNodeImages(state_id);
-  //   cy.style()
-  //   .selector('node')
-  //   .css({
-  //     'font-size': new_font_size,
-  // }).update();
+    setScalarValue('cy-font-size',new_font_size);
+    renderNodeImages();
 });
 
 document.getElementById("layout_btn_grid").addEventListener("click",() =>{
@@ -500,8 +502,9 @@ document.getElementById("default_view_btn").addEventListener("click",() =>{
 });
 
 document.getElementById("reset_graph_btn").addEventListener("click",() =>{
-  setStorageValue('cy-font-size',defaultSettings['cy-font-size']);
-  restoreElements().then(function(){renderNodeImages(state_id);}).
+  setScalarValue('cy-font-size',getDefaultValue('cy-font-size'));
+  restoreElements().
+  then(function(){renderNodeImages();}).
   then(function(){updateStyle();}).
   then(function(){updateLayout('grid');})
       
@@ -517,45 +520,53 @@ document.getElementById("show_params_only_btn").addEventListener("click",() =>{
 
 document.getElementById("node_size_fit_btn").addEventListener("click",() =>{
   setStorageValue('node_render_type','fit');
-  renderNodeImages(state_id).then(updateStyle).then(refreshLayout);
+  renderNodeImages().
+  then(updateStyle).
+  then(refreshLayout);
 });
 
 document.getElementById("node_size_fixed_btn").addEventListener("click",() =>{
   setStorageValue('node_render_type','fixed');
-  setStorageValue('cy-font-size',defaultSettings['cy-font-size']);
-  renderNodeImages(state_id).then(updateStyle).then(refreshLayout);
+  setStorageValue('cy-font-size',getDefaultValue('cy-font-size'));
+  renderNodeImages().then(updateStyle).then(refreshLayout);
+});
+
+document.getElementById("heatmap_radio_btn").addEventListener("click",() =>{
+  setStorageValue('current_image_type','heatmap');
+  renderNodeImages();
+});
+
+document.getElementById("dist_radio_btn").addEventListener("click",() =>{
+  setStorageValue('current_image_type','dist');
+  renderNodeImages()
 });
 
 
-    // Pass the button, the tooltip, and some options, and Popper will do the
-    // magic positioning for you:
+
+document.getElementById("view_param_btn").addEventListener("click",() =>{
+  setStorageValue('current_data_group',['PARAM','tensor']);
+  //renderNodeImages().then(updateStyle).then(refreshLayout);
+  renderNodeImages();
+});
 
 
-    // cy.nodeHtmlLabel([{
-    //   query: 'node',
-    //   valign: "left",
-    //   halign: "center",
-    //   valignBox: "center",
-    //   halignBox: "center",
-    //   tpl: function (data) {
-    //     image_st = "<table>";
-    //     image_st += "<tr><td>id</td><td>"+data.id + "</td></tr>";
-    //     for (cid in data.components) {
-    //       component = data.components[cid];
-    //       image_st += "<tr><td>Component</td><td>"+component + "</td></tr>";
-          
-    //       // for (iid in data.images[component]) {
-    //       //   image_data = data.images[component][iid]
-    //       //   if (image_data.filename.includes("param")) {
-    //       //     image_st += '<img src="0_2/' + image_data.filename + '"  width="200" ><br/>';
-    //       //   }
-    
-    //       // }
-    
-    //     }
-    //     image_st += "</table>";
-    //     //  console.log(image_st);
-    //     return image_st;//'<p class="cy-title__p1">' + data.id + '</p>' + '<p  class="cy-title__p2">' + data.components + '</p>';
-    //   }
-    // }
-    // ]);
+document.getElementById("view_grad_btn").addEventListener("click",() =>{
+  setStorageValue('current_data_group',['PARAM','grad']);
+  //renderNodeImages().then(updateStyle).then(refreshLayout);
+  loadState().then(function(){renderNodeImages()})
+});
+
+document.getElementById("view_buffer_btn").addEventListener("click",() =>{
+  setStorageValue('current_data_group',['BUFFER','tensor']);
+  //renderNodeImages().then(updateStyle).then(refreshLayout);
+  loadState().then(function(){renderNodeImages()})
+});
+
+document.getElementById("state_id_btn").addEventListener("click",() =>{
+
+
+  setStorageValue('state_id',document.getElementById('state_id_input').value);
+  loadState().then(function(){renderNodeImages()})
+  
+//  renderNodeImages().then(updateStyle).then(refreshLayout);
+});

@@ -15,6 +15,36 @@ import matplotlib.pyplot as plt
 import cmapy
 import numpy as np
 
+from PIL import Image, ImageOps, ImageDraw
+
+def get_concat_h_blank(im1, im2, color=(0, 0, 0)):
+    # Source: TODO (internet post)
+    dst = Image.new('RGB', (im1.width + im2.width, max(im1.height, im2.height)), color)
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (im1.width, 0))
+    return dst
+
+
+def get_concat_v_blank(im1, im2, color=(0, 0, 0)):
+    # Source: TODO (internet post)
+    dst = Image.new('RGB', (max(im1.width, im2.width), im1.height + im2.height), color)
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (0, im1.height))
+    return dst
+
+
+def resize_img(img, w=200, h=None, min_h=None, max_h=None, ignore_resize=False):
+    if ignore_resize:
+        return img.copy()
+    ratio = img.size[1]/img.size[0]
+    if h is None:
+        h = int(w * ratio)
+    if min_h is not None:
+        h = max(min_h, h)
+
+    if max_h is not None:
+        h = min(max_h, h)
+    return img.resize((w, h))
 
 def build_custom_color_map_1():
     custom_map = []
@@ -93,6 +123,8 @@ def normalize(v, vstats):
     if vstats is None:
         return normalize_local(v)
     diff = vstats['max']-vstats['min']
+    if diff == 0:
+        diff = 1
     v = (v-vstats['mean']) / diff  # TODO or (v - min)/diff *255
     v = (v+1.0) / 2.0
     return v
@@ -108,12 +140,52 @@ def to_rgb(v):
     v = v.astype(np.uint8)
     return v
 
+def heatmap_legend(minl,maxl,color_map=cv2.COLORMAP_JET):
+    midl = (maxl - minl)/2
+    minv = 0
+    maxv = 100
+    colorw = 10
+    texth = 10
+    tborder = 5 
+    bborder = 5
+    rborder = 50
+    voffset = tborder - int(texth/2)
+    loffset = colorw + 7
+    val = to_rgb(normalize_local(np.tile(np.arange(minv,maxv).reshape(maxv,1),colorw)))
+    val= cv2.applyColorMap(val, color_map)
+    img = PIL.Image.fromarray(val)
+
+    img = ImageOps.expand(img, border=(3,tborder,rborder,bborder),fill='black')
+
+    draw = ImageDraw.Draw(img)
+    draw.text((loffset, maxv -minv+voffset), "{}".format("{}".format(minl), (0, 0, 0)))  # ,font=font))
+    draw = ImageDraw.Draw(img)
+    draw.text((loffset, maxv - int(maxv/2)+voffset), "{}".format("{}".format(midl), (0, 0, 0)))  # ,font=font))
+    draw = ImageDraw.Draw(img)
+    draw.text((loffset, maxv - maxv+voffset), "{}".format("{}".format(maxl), (0, 0, 0)))  # ,font=font))
+    return img
+
+def reshape_long_val(val):
+    print(val.shape)
+    dimmax = max(val.shape[0], val.shape[1])
+    dimsize = np.ceil(np.sqrt(dimmax)).astype(int)
+    tmp = np.zeros(dimsize**2)
+    tmp[:val.size] = val
+    val = tmp.reshape(dimsize, dimsize)
+    return val
 
 def tensor_to_image(val,
                     use_color_for_3channel_data=False,
                     vstats=None,
-                    color_map=cv2.COLORMAP_OCEAN):
+                    color_map=cv2.COLORMAP_JET):
+    if vstats is None:
+        vstats = {
+            'min': np.min(val),
+            'max':np.max(val),
+            'mean': np.mean(val)
+        }
     has_color = False
+    concat_padding = 1
     if val.ndim == 0:
         val = val.reshape(1)
     if val.ndim == 4:
@@ -123,18 +195,22 @@ def tensor_to_image(val,
             if use_color_for_3channel_data and val.shape[1] == 3:
                 xj = np.transpose(val[i], (1, 2, 0))
                 has_color = True
-                #raise Exception("quiting")
+                xj = to_rgb(normalize(xj, vstats))
+                xj_padded = np.zeros((xj.shape[0],xj.shape[1]+concat_padding,xj.shape[2]),dtype=np.uint8)
+                xj_padded[:xj.shape[0],:xj.shape[1],:xj.shape[2]] = xj
             else:
                 xj = []
                 for j in range(val.shape[1]):
                     xj.append(val[i, j])
                 xj = np.concatenate(xj)
-            xi.append(xj)
+                xj = to_rgb(normalize(xj, vstats))
+
+                # xj_padded = np.zeros((xj.shape[0],xj.shape[1]+concat_padding),dtype=np.uint8)
+                # xj_padded[:xj.shape[0],:xj.shape[1]] = xj
+                xj_padded = xj
+
+            xi.append(xj_padded)
         xall = np.concatenate(xi, axis=1)
-        if has_color:
-            xall = to_rgb(normalize_local(xall))
-        else:
-            xall = to_rgb(normalize(xall, vstats))
     elif val.ndim == 1:
         if val.shape[0] == 1 and vstats is not None:
             if val.dtype == np.int:
@@ -143,7 +219,10 @@ def tensor_to_image(val,
                 xall = to_rgb(normalize(nval, vstats)).reshape(1, nval.shape[0])
             elif val.dtype in (np.float, np.float32, np.float64):
                 chunk_count = 10
-                chunk_size = vstats['max']/chunk_count
+                if vstats['max'] != 0:
+                    chunk_size = vstats['max']/chunk_count
+                else:
+                    chunk_size = 10
                 val_chunk = int(val/chunk_size)
                 nval = np.zeros(chunk_count)
                 nval[:val_chunk] = 1.0
@@ -151,14 +230,10 @@ def tensor_to_image(val,
             else:
                 print("Unsupported dtype {}".format(val.dtype))
         else:
-            xall = to_rgb(normalize(val, vstats)).reshape(1, val.shape[0])
+            xall = to_rgb(normalize(val, vstats)).reshape(1, val.shape[0])    
     elif val.ndim == 2:
         if val.shape[0] == 1 and val.shape[1] > 200:
-            dimmax = max(val.shape[0], val.shape[1])
-            dimsize = np.ceil(np.sqrt(dimmax)).astype(int)
-            tmp = np.zeros(dimsize**2)
-            tmp[:val.size] = val
-            val = tmp.reshape(dimsize, dimsize)
+            val = reshape_long_val(val)
         xall = to_rgb(normalize(val, vstats))
     else:
         print('Unsupported number of dims:{}'.format(val.ndim))
@@ -168,7 +243,6 @@ def tensor_to_image(val,
         xall = cv2.applyColorMap(xall, color_map)
     img = PIL.Image.fromarray(xall)
     return img
-
 
 def fig2data(fig):
     # Source: http://www.icare.univ-lille1.fr/tutorials/convert_a_matplotlib_figure
@@ -209,6 +283,26 @@ def tensor_to_dist(val, vstats=None):
     if bins < 1:
         return None
     fig = plt.figure()
+    use_kde = False #(bins > 20)
+    use_rug = False
+    if vstats is not None:
+        mmin = vstats['min']
+        mmax = vstats['max']
+        if mmin < 0:
+            mmin = - max(abs(mmin), abs(mmax))
+            mmax = max(abs(mmin), abs(mmax))
+        sns_plot = sns.distplot(val.ravel(), rug=use_rug, bins=bins, hist=True, kde=use_kde, hist_kws={"range": [mmin, mmax]})
+    else:
+        sns_plot = sns.distplot(val.ravel(), bins=bins, rug=use_rug, hist=True, kde=use_kde)
+    img = fig2img(sns_plot.get_figure())
+    plt.close()
+    return img
+
+def tensor_to_dist_reshape(val, vstats=None):
+    bins = min(int(val.size/10)+2, 100)
+    if bins < 1:
+        return None
+    fig = plt.figure()
     if vstats is not None:
         mmin = vstats['min']
         mmax = vstats['max']
@@ -223,34 +317,6 @@ def tensor_to_dist(val, vstats=None):
     return img
 
 
-def get_concat_h_blank(im1, im2, color=(0, 0, 0)):
-    # Source: TODO (internet post)
-    dst = Image.new('RGB', (im1.width + im2.width, max(im1.height, im2.height)), color)
-    dst.paste(im1, (0, 0))
-    dst.paste(im2, (im1.width, 0))
-    return dst
-
-
-def get_concat_v_blank(im1, im2, color=(0, 0, 0)):
-    # Source: TODO (internet post)
-    dst = Image.new('RGB', (max(im1.width, im2.width), im1.height + im2.height), color)
-    dst.paste(im1, (0, 0))
-    dst.paste(im2, (0, im1.height))
-    return dst
-
-
-def resize_img(img, w=200, h=None, min_h=None, max_h=None, ignore_resize=False):
-    if ignore_resize:
-        return img.copy()
-    ratio = img.size[1]/img.size[0]
-    if h is None:
-        h = int(w * ratio)
-    if min_h is not None:
-        h = max(min_h, h)
-
-    if max_h is not None:
-        h = min(max_h, h)
-    return img.resize((w, h))
 
 
 
