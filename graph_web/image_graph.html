@@ -13,52 +13,26 @@ type="text/css" />
 minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
 <title>Images</title>
 <script src="js/jquery-3.4.1.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="js/cytoscape.min.js"></script>
 <script src="js/dagre.min.js"></script>
 <script src="js/cytoscape-dagre.js"></script>
-<script src="js/cytoscape-node-html-label.min.js"></script>
+<!-- <script src="js/cytoscape-node-html-label.min.js"></script>
 <script src="js/cytoscape-context-menus.js"></script>
-<script src="js/cytoscape-cxtmenu.js"></script>
+<script src="js/cytoscape-cxtmenu.js"></script> -->
 <script src="js/bootstrap.bundle.min.js"></script>
 
 <body>
 <div class="container-fluid">
 <div class="row">
 <div class="col-sm-12">
-
+<h1>Model Inspector (dev)</h1>
 <div id="session_loss_plot">
-Session Loss Plot (TODO)
 </div>
-<div id="state_details">
-Current State Details
-<table class="table table-sm">
-    <thead>
-    <tr>
-        <th>
-            id
-        </th>
-        
-        <th>
-            epoch
-        </th>
-        
-        <th>
-            iteration
-        </th>
-        </tr>
-    </thead>
-    <tr>
-        <td>
-            0_2
-        </td>
-        <td>
-            0
-        </td>
-        <td>
-            2
-        </td>
-    </tr>
-</table>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+    <hr/>
 </div>
 </div>
 </div>
@@ -66,10 +40,13 @@ Current State Details
 
 <div class="col-sm-8">
 
+    
 <!-- graph : start -->
 
 <div id="cy-container">
-<div id="cy"></div>
+<div id="cy">
+    
+</div>
 </div>
 
 <!-- graph : end -->
@@ -81,13 +58,18 @@ Current State Details
 <div class="container-fluid">
 <div class="row">
     <div class="col">
-        <h5>Controls</h5>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="0_4" id="state_id_input" aria-label="State ID" aria-describedby="basic-addon2">
-            <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" id="state_id_btn">Submit</button>
-            </div>
-        </div>
+
+            <div class="btn-group" role="group" aria-label="Basic example">
+                <button type="button" class="btn btn-danger" id ='stop_btn'>Stop</button>
+                <button type="button" class="btn btn-success" id="play_forward_btn">Play</button>
+              </div>
+
+        <div id="state_info"></div>
+        <hr/>
+    </div>
+    </div>
+    <div class="row">
+        <div class="col">
         <div  class="form-group">
             <div class="input-group mb-3">
                 <div class="input-group-prepend">
@@ -171,7 +153,7 @@ Current State Details
                 type="radio" value=""
                 name="radio_node_view"
                 id="dist_radio_btn">
-            <label class="form-check-label">Distribuion</label>
+            <label class="form-check-label"  for="dist_radio_btn">Distribuion</label>
         </div>
 
         <div class="form-check">
@@ -180,7 +162,7 @@ Current State Details
                 name="radio_node_view"
                 id="heatmap_radio_btn"
                 >
-            <label class="form-check-label"
+            <label class="form-check-label"  for="heatmap_radio_btn"
                 >Heatmap</label>
         </div>
 
@@ -195,7 +177,7 @@ Current State Details
             name="radio_node_data"
                 type="radio" value=""
                 id="view_param_btn">
-            <label class="form-check-label"
+            <label class="form-check-label" for="view_param_btn"
                 >Parameter Values</label>
         </div>
 
@@ -204,14 +186,14 @@ Current State Details
             name="radio_node_data"
                 type="radio" value=""
                 id="view_grad_btn">
-            <label class="form-check-label">Gradient Values</label>
+            <label class="form-check-label" for="view_grad_btn">Gradient Values</label>
         </div>
         <div class="form-check">
             <input class="form-check-input"
             name="radio_node_data"
                 type="radio" value=""
                 id="view_buffer_btn">
-            <label class="form-check-label">Buffer Values</label>
+            <label class="form-check-label" for="view_buffer_btn">Buffer Values</label>
         </div>
     </div>
 

@@ -1,6 +1,7 @@
 #cy {
   border: solid;
-  border-width: 1;
+  border-width: 0.5;
+  border-color: #DDD;
   height: 100%;
 }
 
@@ -18,22 +19,51 @@ h1 {
   margin-right: 5px;
 } */
 
-img {
+img { 
   display: block;
-  max-width:300px;
   max-height:300px;
-  width: auto;
   min-height: 100px;
-  min-width:300px;
+  width:400px;
 }
-/* 
+
 .nodefill {
   padding:0px;
   margin:0px;
 
+} 
+
+/* Style the dots by assigning a fill and stroke */
+.dot {
+  fill: steelblue;
+  stroke: steelblue;
+}
+
+.dot_selected{
+  fill: #22FF55;
+  stroke: steelblue;
+}
+/* 
+.g_main {
+  pointer-events: all;
 } */
 
 /* .image_wrapper{
 
   width: 1000px;
 } */
+
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+#session_loss_plot{
+  width: 100%;
+  margin-right: 60px;
+  height: 100%;
+  min-height: 200px;
+  height: 200px;
+
+}

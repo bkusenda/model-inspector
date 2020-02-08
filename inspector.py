@@ -47,6 +47,8 @@ def apply_function_to_states(
 def compute_sum_fn(x0, x1): return x0 + np.abs(x1)
 
 
+def get_id(epoch,itr):
+    return "{}_{}".format(epoch,itr)
 
 class Inspector:
     """
@@ -69,7 +71,19 @@ class Inspector:
         self.graph_data={}
         self.last_graph_id = None
 
-    def log(
+        self.metrics_log = []
+
+
+
+    def log_metrics(
+        self,
+        epoch: int,
+        itr: int,
+        metrics: Dict[str,Any]):
+
+        self.metrics_log.append({'id': get_id(epoch,itr),'epoch': epoch, 'iter': itr, 'metrics':metrics})
+
+    def log_state(
             self,
             epoch: int,
             itr: int,
@@ -85,7 +99,7 @@ class Inspector:
         """
     
         state = {}
-        state['id'] = "{}_{}".format(epoch,itr)
+        state['id'] = get_id(epoch,itr)
         state['meta'] = {}
         state['meta']['time'] = time.time()
         state['step_info'] = {'epoch': epoch, 'iter': itr}
