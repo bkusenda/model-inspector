@@ -32,12 +32,12 @@ var imageTypeElData = {
 var defaultScalars={
   'cy-layout':'grid',
   'cy-font-size':55,
-  'cy-node-width':300,
-  'cy-node-height':300,
+  'cy-node-width':360,
+  'cy-node-height':250,
   'cy-edge-size':10,
   'play_mode': 'stop',
   'active_image': 'tensor',
-  'node_render_type': 'fit',
+  'node_render_type': 'fixed',
   'session_path' :"session_data",
   'session_id': "test",
   'state_id' :"0_0",
@@ -215,43 +215,71 @@ function updateStyle(){
 }
 
 
-function renderNodeImages(){
+
+async function renderNodeImages(){
+
+  let stateData = getCurrentState()
 
   if (getStorageValue('node_render_type') == 'fixed'){
     //if fixed, use this
-    cy.style().selector('node').css({
-      'height': getStorageValue('cy-node-height'),
-      'width': getStorageValue('cy-node-width'),
-      'font-size': getStorageValue('cy-font-size'),
-      'background-fit':'cover'
-    }).update();
+    updateStyle();
+
   }
 
-  var current_image_type = getStorageValue('current_image_type');
-  var current_data_group = getStorageValue('current_data_group');
+  let current_image_type = getStorageValue('current_image_type');
+  let current_data_group = getStorageValue('current_data_group');
   
   //TODO  switch toselector  https://js.cytoscape.org/#style/background-image
-  cy.nodes().map(function(node) {
-    ndata = node.data();
-    image_info = getNodeData(ndata.id).image_info;
-    
-    if (current_image_type in image_info 
-      && current_data_group in image_info[current_image_type]) {
 
-      var img = image_info[current_image_type][current_data_group]
-      style_update={};
-      if (getStorageValue('node_render_type') == 'fit'){
-        style_update['height'] = img.height;
-        style_update['width'] = img.width;
+
+  function updateBackground(stateData){
+    return Promise.all(cy.nodes().map(async function(node) {
+      let ndata = node.data();
+      if (!(ndata.id in window.appdata['nodeData'][stateData.id])){
+        console.log(window.appdata['nodeData'][stateData.id].length)
+        return
       }
-      style_update['background-image'] = img.src;
-      node.style(style_update);
-    }
-  })
+      let nodeData = getNodeData(ndata.id);
+      if (typeof(nodeData) == 'undefined') {
+        //console.log(`nodeData was undefined for ${ndata.id} ${stateData.id}`)
+        return
+      }
 
-  cy.style().selector('node').css({
-    'font-size': getStorageValue('cy-font-size'),
-  }).update();
+
+      let image_info = getNodeData(ndata.id).image_info;
+      let node_data_group = current_data_group
+      let node_image_type = current_image_type
+
+      if (ndata.label == 'INPUT'){
+        node_image_type = 'heatmap'
+        node_data_group = ['INPUT','tensor']
+      }
+
+      if (node_image_type in image_info 
+        && node_data_group in image_info[node_image_type]) {
+
+        var img = image_info[node_image_type][node_data_group] 
+        style_update={};
+        if (getStorageValue('node_render_type') == 'fit'){
+          style_update['height'] = img.height;
+          style_update['width'] = img.width;
+        }
+        style_update['background-image'] =  img.src//plotNormDist(-0.1,1.3,.2,0.1)//build_random_svg()//img.src;
+        node.style(style_update);}
+    }));
+  }
+  
+  if (stateData.id in window.appdata['nodeData'] ){
+    await updateBackground(stateData);
+  } else{
+    window.appdata['nodeData'][stateData.id] = {}
+    await buildAllNodes(stateData);
+    await updateBackground(stateData);
+  }
+
+  // cy.style().selector('node').css({
+  //   'font-size': getStorageValue('cy-font-size'),
+  // }).update();
 }
 
 const skipNode = (node) => {
@@ -351,8 +379,12 @@ const buildHeadPlot = async () => {
     return d.metrics[active_metric]; })]);
 
   let xAxisGen = d3.axisBottom(xScale);
-  xAxisGen.tickValues(metric_ids.filter((v,i)=>i%3))
-  xAxisGen.tickFormat((d,i) => metric_ids[i]);
+  
+  let tickGap = metric_ids.length/10
+
+  let xticks = metric_ids.filter((v,i)=>(i%tickGap)==0)
+  xAxisGen.tickValues(xticks)
+  xAxisGen.tickFormat((d,i) => xticks[i]);
 
   // define the line
   var valueline = d3.line()
@@ -383,11 +415,11 @@ svg.selectAll(".dot")
     .attr("cx", function(d, i) { return xScale(d.id) })
     .attr("cy", function(d) { return yScale(d.metrics[active_metric]) })
     .attr("r", radius)
-    .on("mouseover", function(d){
+    .on("mouseover", async function(d){
       svg.selectAll(".dot").attr("r",radius).attr("class", "dot");
       d3.select(this).attr('r',radius *2).attr("class", "dot dot_selected");
       setStorageValue('state_id',d.id);
-      renderNodeImages();
+      await renderNodeImages();
       document.getElementById("state_info").innerHTML = `<p>state id: ${d.id}</p>`
       });
 
@@ -408,13 +440,10 @@ svg.selectAll(".dot")
   .style("text-anchor", "middle")
   .text(active_metric);      
 
-
-
   // Add the Y Axis
   svg.append("g")
     .call(d3.axisLeft(yScale));
 
- 
   }    
   
   // CREATE GRAPH
@@ -431,7 +460,7 @@ svg.selectAll(".dot")
       style: cytoscape.stylesheet()
         .selector('node')
         .css({
-          'background-fit': 'cover',
+          'background-fit': 'contain',
           'height': getStorageValue('cy-node-height'),
           'width': getStorageValue('cy-node-width'),
           'font-size': getStorageValue('cy-font-size'),
@@ -465,7 +494,6 @@ svg.selectAll(".dot")
     backupInitState();    
     renderNodeImages();
     updateStyle();
-
     updateRadioButtons(imageTypeElData,getStorageValue('current_image_type'));
     updateRadioButtons(dataViewElData,getStorageValue('current_data_group').join("_"));
   });
@@ -530,7 +558,7 @@ const loadImage = (img) =>
 
 
 function makeImage(src){
-  img = new Image();
+  let img = new Image();
   img.src = src;
   return img;
 }
@@ -543,6 +571,7 @@ const buildNodeInfo = async (node,state) =>{
 
   
   var image_info ={}
+  var stats_info ={}
   getStorageValue('image_types').forEach(
     function(img_type){
       image_info[img_type]={}});
@@ -552,19 +581,49 @@ const buildNodeInfo = async (node,state) =>{
         if (component_ids[i] in state['data']) {
           comp = component_ids[i];
           component_info[comp] = state['data'][comp];
-          dgts_avail.add(component_info[comp]['data_group_type'])
+          dgt = component_info[comp]['data_group_type']
+          dgts_avail.add(dgt)
+          if (!(dgt in stats_info)){
+            stats_info[dgt]=[]
+          }
+          stat_info={
+            data_group_type:dgt,
+            component:comp,
+            tensor__stats:state['data'][comp]['value']['tensor__stats']}
+          if (dgt =='PARAM'){
+            stat_info['grad_stat'] = state['data'][comp]['value']['grad__stats']
+          }
+          stats_info[dgt].push(stat_info)
         }
   }
-    
+
     getStorageValue('valid_data_group_types').forEach(function(item,index){
-      dgt = item[0]
-      vt = item[1]
+      let dgt = item[0]
+      let vt = item[1]
       if (dgts_avail.has(dgt)){
         getStorageValue('image_types').forEach(function(image_type,index2){
-          var image_path = `${getSessionPath()}/${state.id}/images/${ndata.id}_${dgt}_${vt}__${image_type}.jpg`
-          var img = makeImage(image_path)
-          image_info[image_type][[dgt,vt]] = img       
-          promise_list.push(loadImage(img))
+          if (image_type == 'dist'){
+            var stat_info = stats_info[dgt]
+            var plot_stats = []
+            for (i =0; i< stat_info.length;i++){
+              plot_stat = {...stat_info[i].tensor__stats}
+              plot_stat['xlabel'] = stat_info[i].component;
+              plot_stats.push(plot_stat)
+            }
+            
+            image_info[image_type][[dgt,vt]] = { 
+              src:plotNormDistMulti(plot_stats),
+              height: getStorageValue('cy-node-height'),
+              width: getStorageValue('cy-node-width')}
+          } else{
+            var image_path = `${getSessionPath()}/${state.id}/images/${ndata.id}_${dgt}_${vt}__${image_type}.jpg`
+            var img = makeImage(image_path)
+
+            image_info[image_type][[dgt,vt]] = img  
+            promise_list.push(loadImage(img))
+
+          }
+
         });
       }
   
@@ -606,15 +665,21 @@ const initSession = async () => {
   .map(async function(state_id){
     return $.getJSON(`${getSessionPath()}/${state_id}/state.json`)}));
 
-  // Prep states and load images
-  await Promise.all(allStateData.map(async function(stateData){
-      window.appdata['stateData'][stateData.id] = stateData
-      window.appdata['nodeData'][stateData.id] = {}
-      return await buildAllNodes(stateData);
-    }))
-
 
   await buildHeadPlot();
+
+  allStateData.map(function(stateData){
+    window.appdata['stateData'][stateData.id] = stateData
+  })
+
+  // Prep states and load images
+  // await Promise.all(allStateData.map(async function(stateData){
+  //   window.appdata['stateData'][stateData.id] = stateData
+  //   window.appdata['nodeData'][stateData.id] = {}
+  //   return await buildAllNodes(stateData);
+  // }))
+
+
   await initGraph()
 
   // TEMPORARY FIX (TODO): this is currently used to ensure 
@@ -718,22 +783,30 @@ document.getElementById("view_buffer_btn").addEventListener("click",() =>{
   renderNodeImages();
 });
 
+
+// document.getElementById("step_forward_btn").addEventListener("click",async () =>{
+//   setStorageValue('current_state_idx',0);
+  
+// });
+
 document.getElementById("play_forward_btn").addEventListener("click",async () =>{
   setStorageValue('play_mode',"play_forward");
 
-  var play_mode = getStorageValue('play_mode');
   var sessionData = getCurrentSessionData();
-  while (true){
+  var done = false;
+  while (!done){
     for (i in sessionData.state_ids){
+      let play_mode = getStorageValue('play_mode');
       state_id = sessionData.state_ids[i]
       setStorageValue('state_id',state_id);
           
-      renderNodeImages();
+      await renderNodeImages();
       document.getElementById("state_info").innerHTML = `<p>state id: ${state_id}</p>`
       if (play_mode != "play_forward"){
+        done = true
         break
       }
-      await sleep(300)
+      await sleep(30)
     }
     
   }
@@ -745,7 +818,179 @@ document.getElementById("stop_btn").addEventListener("click",async () =>{
   setStorageValue('play_mode',"stop");  
 });
 
+//PLOTTING FUNCTIONS 
 
-$(document).ready(function(){
+function plotNormDistMulti( 
+  statsList,
+  dotsCount = 50, 
+  Width=300, 
+  Height=200, 
+  margin = {top: 20, right: 20, bottom: 30, left: 40}){
 
-})
+  const canvas = d3.select(document.createElement( 'canvas' ) ).attr("width", Width).attr("height", Height);
+  var ctx = canvas.node().getContext('2d')
+
+  var plotHeight = Height /statsList.length
+
+  for (i = 0;i< statsList.length;i++){
+    var stat = statsList[i]
+
+  plotNormDistAsCanvas(
+    stat.xlabel,
+    stat.min,
+    stat.max,
+    stat.mean, 
+    stat.variance,
+    ctx,  
+    dotsCount = dotsCount, 
+    Width=Width, 
+    Height=plotHeight, 
+    xoffset = 0,
+    yoffset = i * plotHeight,
+    margin = margin)
+  }
+  return canvas.node().toDataURL();
+}
+
+
+function plotNormDistAsCanvas( 
+  xlabel,
+  minval,
+  maxval,
+  mean ,
+  sigma , 
+  context,
+  dotsCount = 20, 
+  Width=300, 
+  Height=200, 
+  xoffset = 0,
+  yoffset = 0,
+  margin = {top: 20, right: 20, bottom: 30, left: 40}){
+
+ 
+  const width = Width - margin.right - margin.left;
+  const height= Height - margin.top - margin.bottom;
+  context.translate(margin.left, margin.top);
+  context.font = "8px monospace";
+  context.fillStyle = 'black'
+
+  if ((maxval - minval) == 0){
+    context.textAlign = "center";
+    context.textBaseline = "top";
+    context.fillText(`${xlabel}`, width/2, height + yoffset);
+    context.fillText(`Stats: mean:${mean}, var:${sigma}, min/max: ${minval}/${maxval}`, width/2, height + yoffset+10);
+    context.closePath();
+    context.translate(-margin.left, -margin.top);
+    return 
+  }
+
+  const xScale = d3.scaleLinear().rangeRound([xoffset, width+xoffset]);
+  const yScale = d3.scaleLinear().rangeRound([height+yoffset, yoffset]);
+  const xAxis = d3.axisBottom(xScale);
+  const yAxis = d3.axisLeft(  yScale);
+
+  function drawXAxis() {
+    var tickCount = 10,
+        tickSize = 6,
+        ticks = xScale.ticks(tickCount),
+        tickFormat = xScale.tickFormat();
+  
+    context.beginPath();
+
+  
+    context.beginPath();
+    context.moveTo(0, height+yoffset);
+    context.lineTo(width+tickSize, height+yoffset);
+    context.strokeStyle = "#BBB";
+    context.stroke();
+
+
+    ticks.forEach(function(d) {
+      context.moveTo(xScale(d), height+yoffset);
+      context.lineTo(xScale(d), height + tickSize+yoffset);
+    });
+    context.strokeStyle = "#BBB";
+    context.stroke();
+    context.closePath()
+  
+    context.textAlign = "center";
+    context.textBaseline = "top";
+    ticks.forEach(function(d) {
+      context.fillText(tickFormat(d), xScale(d), height + tickSize+yoffset);
+    });
+    context.fillText(xlabel, width/2, height + tickSize+yoffset+10);
+    
+
+    
+  }
+
+
+  function drawYAxis() {
+    var tickCount = 5,
+        tickSize = 6,
+        tickPadding = 3,
+        ticks = yScale.ticks(tickCount),
+        tickFormat = yScale.tickFormat(tickCount);
+
+    context.beginPath();
+    ticks.forEach(function(d) {
+      context.moveTo(0, yScale(d));
+      context.lineTo(-6, yScale(d));
+    });
+    context.strokeStyle = "#BBB";
+    context.stroke();
+  
+    context.beginPath();
+    context.moveTo(-tickSize, 0+yoffset);
+    context.lineTo(0.5, 0+yoffset);
+    context.lineTo(0.5, height+yoffset);
+    context.lineTo(-tickSize, height+yoffset);
+    context.strokeStyle = "#BBB";
+    context.stroke();
+  
+    context.textAlign = "right";
+    context.textBaseline = "middle";
+    context.closePath()
+    // ticks.forEach(function(d) {
+    //   context.fillText(tickFormat(d), -tickSize - tickPadding, yScale(d));
+    // });
+  }
+
+
+
+  const line = d3.line()
+  .curve(d3.curveLinear)
+  .x(d => xScale(d[0]))
+  .y(d => yScale(d[1]))
+  .context(context);
+
+
+  var interval = (maxval - minval)/dotsCount
+  var data = []
+
+  for(var x = minval; x<=maxval;x = x + interval){
+    var y = Math.exp(-0.5 * Math.pow(((x - mean)/sigma),2))/(sigma * Math.sqrt(2 * Math.PI))
+    var entry = [x,y]
+    data.push(entry)
+  }
+  
+  const xExtent = d3.extent(data, d => d[0]);
+  const yExtent = d3.extent(data, d => d[1]);
+  xScale.domain(xExtent);
+  yScale.domain(yExtent);
+
+  //context.clearRect(0, 0, width, height);
+  context.beginPath();
+  line(data);
+  context.lineWidth = 1;
+  context.opacity = 0.7;
+  context.strokeStyle = "steelblue";
+  context.stroke();
+  context.closePath();
+
+  drawXAxis()
+  drawYAxis()
+  context.translate(-margin.left, -margin.top);
+
+}
+
