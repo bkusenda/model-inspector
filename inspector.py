@@ -188,6 +188,10 @@ class Inspector:
                     stats_updated['max'] = stats_tmp['minmax'][1]
                     stats_updated['mean'] = stats_tmp['mean']
                     stats_updated['variance'] = stats_tmp['variance']
+                    stats_updated['nobs'] = stats_tmp['nobs']
+                    bins = int(min(max(5,np.sqrt(stats_tmp['nobs'])),100))
+                    stats_updated['histogram_bins'] = bins
+                    stats_updated['histogram'] = np.histogram(value,bins=bins)
                     stats_data["{}{}".format(vname,stats_suffix)] = stats_updated
             data['value'].update(stats_data)
             results[k]=stats_data

@@ -1,8 +1,9 @@
 #cy {
   border: solid;
   border-width: 0.5;
-  border-color: #DDD;
+  border-color: #EEE;
   height: 100%;
+  background-color: #f4f4f4
 }
 
 h1 {
@@ -21,7 +22,13 @@ h1 {
 
 img { 
   display: block;
-  max-height:300px;
+  /* max-height:300px; */
+  width:400px;
+}
+
+.canvas_box { 
+  display: block;
+  /* max-height:300px; */
   min-height: 100px;
   width:400px;
 }
@@ -36,6 +43,7 @@ img {
 .dot {
   fill: steelblue;
   stroke: steelblue;
+  opacity: 0.5;
 }
 
 .dot_selected{
@@ -69,7 +77,7 @@ img {
 }
 
 .test_box{
-  background-repeat: no-repeat;
+  /* background-repeat: no-repeat; */
   
   width: 360px;
   height: 250px;

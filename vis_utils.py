@@ -114,6 +114,9 @@ def display_img(img, h=200):
 def normalize_local(v):
     vmean = np.mean(v)
     diff = np.max(v)-np.min(v)
+    if diff == 0:
+        diff = 1
+    
     v = (v-vmean) / diff  # TODO or (v - min)/diff *255
     v = (v+1.0) / 2.0
     return v
@@ -141,9 +144,10 @@ def to_rgb(v):
     return v
 
 def heatmap_legend(minl,maxl,color_map=cv2.COLORMAP_JET):
+    no_change = maxl == minl
     midl = (maxl - minl)/2
     minv = 0
-    maxv = 100
+    maxv = 50
     colorw = 10
     texth = 10
     tborder = 5 
@@ -151,19 +155,36 @@ def heatmap_legend(minl,maxl,color_map=cv2.COLORMAP_JET):
     rborder = 50
     voffset = tborder - int(texth/2)
     loffset = colorw + 7
-    val = to_rgb(normalize_local(np.tile(np.arange(minv,maxv).reshape(maxv,1),colorw)))
-    val= cv2.applyColorMap(val, color_map)
-    img = PIL.Image.fromarray(val)
+    if not no_change:
+        val = to_rgb(normalize_local(np.tile(np.arange(minv,maxv).reshape(maxv,1),colorw)))
+        val= cv2.applyColorMap(val, color_map)
+        
+        img = PIL.Image.fromarray(val)
 
-    img = ImageOps.expand(img, border=(3,tborder,rborder,bborder),fill='black')
+        img = ImageOps.expand(img, border=(3,tborder,rborder,bborder),fill='black')
 
-    draw = ImageDraw.Draw(img)
-    draw.text((loffset, maxv -minv+voffset), "{}".format("{}".format(minl), (0, 0, 0)))  # ,font=font))
-    draw = ImageDraw.Draw(img)
-    draw.text((loffset, maxv - int(maxv/2)+voffset), "{}".format("{}".format(midl), (0, 0, 0)))  # ,font=font))
-    draw = ImageDraw.Draw(img)
-    draw.text((loffset, maxv - maxv+voffset), "{}".format("{}".format(maxl), (0, 0, 0)))  # ,font=font))
-    return img
+
+        draw = ImageDraw.Draw(img)
+        draw.text((loffset, maxv -minv+voffset), "{}".format("{}".format(minl), (0, 0, 0)))  # ,font=font))
+        draw = ImageDraw.Draw(img)
+        draw.text((loffset, maxv - int(maxv/2)+voffset), "{}".format("{}".format(midl), (0, 0, 0)))  # ,font=font))
+        draw = ImageDraw.Draw(img)
+        draw.text((loffset, voffset), "{}".format("{}".format(maxl), (0, 0, 0)))  # ,font=font))
+
+        return img
+    else:
+        val = to_rgb(normalize_local(np.tile(np.zeros(maxv).reshape(maxv,1),colorw)))
+
+        img = PIL.Image.fromarray(np.zeros(val.shape))
+
+        img = ImageOps.expand(img, border=(3,tborder,rborder,bborder),fill='black')
+
+        draw = ImageDraw.Draw(img)
+        draw.text((loffset, voffset), "{}".format("NO VARIANCE", (0,0,0)))  # ,font=font))
+ 
+        return img
+        
+
 
 def reshape_long_val(val):
     print(val.shape)
