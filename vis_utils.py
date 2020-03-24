@@ -102,8 +102,6 @@ def demo_color_map(plt_color_map):
 
 
 # Param to Image Processing Functions
-
-
 def display_img(img, h=200):
     ratio = img.size[1]/img.size[0]
     if w is None:

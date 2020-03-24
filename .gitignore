@@ -3,3 +3,4 @@ graph_web/session_data/
 graph_web/node_modules/
 .vscode/
 .ipynb_checkpoints/
+.gitignore

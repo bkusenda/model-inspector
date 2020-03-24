@@ -1,15 +1,21 @@
+body {
+    overflow: hidden;
+}
+
 #cy {
-  border: solid;
-  border-width: 0.5;
-  border-color: #EEE;
-  height: 100%;
-  background-color: #f4f4f4
+    border: solid;
+    border-width: 0.5;
+    border-color: #EEE;
+    height: 80%;
+    background-color: #f4f4f4
 }
 
 h1 {
-  opacity: 0.5;
-  font-size: 1em;
+    opacity: 0.5;
+    font-size: 1em;
 }
+
+
 /* 
 .btn-toolbar .btn {
   margin-bottom: 5px; 
@@ -20,65 +26,93 @@ h1 {
   margin-right: 5px;
 } */
 
-img { 
-  display: block;
-  /* max-height:300px; */
-  width:400px;
+img.side_data {
+    display: block;
+    /* max-height:300px; */
+    width: 500px;
 }
 
-.canvas_box { 
-  display: block;
-  /* max-height:300px; */
-  min-height: 100px;
-  width:400px;
+p.image_caption {
+    text-align: center;
+}
+
+.image_holder {
+    display: block;
+    /* max-height:300px; */
+    min-height: 100px;
+    width: 500px;
+    padding-bottom: 10px;
 }
 
 .nodefill {
-  padding:0px;
-  margin:0px;
+    padding: 0px;
+    margin: 0px;
+}
 
-} 
 
 /* Style the dots by assigning a fill and stroke */
+
 .dot {
-  fill: steelblue;
-  stroke: steelblue;
-  opacity: 0.5;
+    fill: steelblue;
+    stroke: steelblue;
+    opacity: 0.8;
 }
 
-.dot_selected{
-  fill: #22FF55;
-  stroke: steelblue;
+.dot_selected {
+    fill: red;
+    stroke: rgb(44, 46, 48);
 }
-/* 
-.g_main {
-  pointer-events: all;
-} */
 
-/* .image_wrapper{
+.selected_marker {
+    fill: red;
+    stroke: red;
+}
 
-  width: 1000px;
-} */
+.marker_hover {
+    opacity: 1;
+    fill: red;
+    stroke: red;
+}
 
+.marker {
+    fill: grey;
+    stroke: red;
+}
 
 .line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 2px;
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 2px;
 }
 
-#session_loss_plot{
-  width: 100%;
-  margin-right: 60px;
-  height: 100%;
-  min-height: 200px;
-  height: 200px;
-
+#session_loss_plot {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    height: 200px;
+    pointer-events: all;
+    border:1px solid lightgrey;
+    padding:1px;
 }
 
-.test_box{
-  /* background-repeat: no-repeat; */
-  
-  width: 360px;
-  height: 250px;
+.stats-table {
+    display: hide;
+}
+
+.state_data {
+    text-align: left;
+    padding: 12px;
+}
+
+.side-scrollbar {
+    position: relative;
+    /* height: 600px; */
+    width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding-bottom: 20px;
+}
+
+.side-wrapper-scroll-y {
+    display: block;
 }

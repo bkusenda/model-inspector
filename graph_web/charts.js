@@ -1,7 +1,7 @@
 
 
 //https://stackoverflow.com/questions/39695967/d3-js-ordinal-scale-version-3-to-version-4
-const buildHeadPlot = async (data) => {
+const buildHeadPlot = async (data, active_metric) => {
 
   var chartDiv = document.getElementById("session_loss_plot");
   // Extract the width and height that was computed by CSS.
@@ -13,7 +13,6 @@ const buildHeadPlot = async (data) => {
   var margin = {top: 20, right: 20, bottom: 50, left: 50},
   width = cwidth - margin.left - margin.right,
   height = cheight - margin.top - margin.bottom;
-  var active_metric = "loss";
   var padding = 0
   // set the ranges
   var xScale = d3.scaleLinear().range([0, width])
@@ -21,7 +20,8 @@ const buildHeadPlot = async (data) => {
 
 
     
-  var svg = d3.select("#session_loss_plot").append("svg")
+  var svg = d3.select("#session_loss_plot")
+  .append("svg")
   .attr("width", cwidth)
   .attr("height", cheight)
   .append("g")
@@ -29,11 +29,11 @@ const buildHeadPlot = async (data) => {
         "translate(" + margin.left + "," + margin.top + ")");
 
   // Get the data
-  state_ids = data.state_ids
-  metric_ids = data.metric_ids
-  all_metrics = metric_ids.map((id)=>data.session_metrics[id])
-  state_metrics = state_ids.map((id)=>data.session_metrics[id])
-  idxLookup = {}
+  let state_ids = data.state_ids
+  let metric_ids = data.metric_ids
+  let all_metrics = metric_ids.map((id)=>data.session_metrics[id])
+  let state_metrics = state_ids.map((id)=>data.session_metrics[id])
+  let idxLookup = {}
   metric_ids.forEach(function(d,i){ idxLookup[d]=i})
   
   xScale.domain([0,metric_ids.length]);
@@ -42,10 +42,16 @@ const buildHeadPlot = async (data) => {
 
   let xAxisGen = d3.axisBottom(xScale);
 
-  xAxisGen.ticks(Math.min(30,metric_ids.length))
+  xAxisGen.ticks(Math.min(20,metric_ids.length))
   xAxisGen.tickFormat((d,i) => metric_ids[d]);
 
   // define the line
+  var valueline = d3.line()
+  .x(function(d,i) { 
+    return xScale(i) })
+  .y(function(d) { 
+    return yScale(d.metrics[active_metric]); });
+
   var valueline = d3.line()
   .x(function(d,i) { 
     return xScale(i) })
@@ -60,25 +66,67 @@ const buildHeadPlot = async (data) => {
     .attr("d", valueline);
 
   // Add the X Axis
-  svg.append("g")
+  var xAx = svg.append("g")
     .attr("transform", "translate(0," + height + ")")
     .call(xAxisGen)    
 
-var radius = 5;
-svg.selectAll(".dot")
+  // SELECTED MARKER
+  //make accessable globally
+  var markerWidth = 4
+
+  svg
+  .append("rect") // Uses the enter().append() method
+  .attr("transform", "translate(0,0)")
+  .attr("class", "selected_marker") // Assign a class for styling
+  .attr("fill","red")
+  .attr("x", xScale(idxLookup["0_0"]) - markerWidth/2 )
+  .attr("y",0)
+  .attr("opacity",0.5)
+  .attr("width", markerWidth)
+  .attr("height",height)
+
+  window.updateGraphSelected = function updateGraphSelected(id){
+
+  var svg = d3.select("#session_loss_plot").transition();
+    svg.select(".selected_marker")
+    .attr("class", "selected_marker") // Assign a class for styling
+    .attr("fill","red")
+    .attr("x", xScale(idxLookup[id]) - markerWidth/2 )
+    .attr("y",0)
+    .attr("opacity",0.5)
+    .attr("width", markerWidth)
+    .attr("height",height)
+  }
+
+
+
+// CIRCLES
+  var unselectedMarkerHeight = 10
+  var unselectedMarkerWidth = 8
+  svg.selectAll(".marker")
     .data(state_metrics)
-  .enter().append("circle") // Uses the enter().append() method
-    .attr("class", "dot") // Assign a class for styling
-    .attr("cx", function(d, i) { return xScale(idxLookup[d.id]) })
-    .attr("cy", function(d) { return yScale(d.metrics[active_metric]) })
-    .attr("r", radius)
+    .enter()
+    .append("rect") // Uses the enter().append() method
+    .attr("transform", "translate(0,0)")
+    .attr("class", "marker") // Assign a class for styling
+    .attr("fill","steelblue")
+    .attr("x", function(d, i) { return xScale(idxLookup[d.id]) - unselectedMarkerWidth/2 })
+    .attr("y", yScale(0) - unselectedMarkerHeight/2 )
+    .attr("opacity",0.5)
+    .attr("width", unselectedMarkerWidth)
+    .attr("height",unselectedMarkerHeight)
+    .on("mouseover", async function(d){
+      d3.select(this).attr("class", "marker_hover")
+      })
+    .on("mouseleave", async function(d){
+      d3.select(this).attr("class", "marker")
+      })
     .on("click", async function(d){
-      svg.selectAll(".dot").attr("r",radius).attr("class", "dot");
-      d3.select(this).attr('r',radius *2).attr("class", "dot dot_selected");
-      setStorageValue('state_id',d.id);
-      await renderNodeImages();
-      document.getElementById("state_info").innerHTML = `<p>state id: ${d.id}</p>`
+      await changeStateById(d.id)
+      await updateGraphSelected(d.id)
+      await updateSideBar();
       });
+
 
   // text label for the x axis
   svg.append("text")             
@@ -100,26 +148,41 @@ svg.selectAll(".dot")
   // Add the Y Axis
   svg.append("g")
     .call(d3.axisLeft(yScale));
+
+
+//       // On Click, we want to add data to the array and chart
+//   svg.on("click", function() {
+//     var coords = d3.mouse(this);
+//     console.log(coords)
+
+//     // Normally we go from data to pixels, but here we're doing pixels to data
+//     var newData= {
+//       x: Math.round( xScale.invert(coords[0])),  // Takes the pixel number to convert to number
+//       y: Math.round( yScale.invert(coords[1]))
+//     };
+//     console.log(newData)
   
-  var currentTransform = null
-  var view = svg.append("g")
-      .attr("class", "view");
-  if (currentTransform) view.attr('transform', currentTransform);
-  var zoom = d3.zoom()
-  .scaleExtent([0.5, 5])
-  .translateExtent([
-      [-width * 2, -height * 2],
-      [width * 2, height * 2]
-  ])
-  .on("zoom", zoomed);
+//  })
+  
+  // var currentTransform = null
+  // var view = svg.append("g")
+  //     .attr("class", "view");
+  // if (currentTransform) view.attr('transform', currentTransform);
+  // var zoom = d3.zoom()
+  // .scaleExtent([0.5, 5])
+  // .translateExtent([
+  //     [-width * 2, -height * 2],
+  //     [width * 2, height * 2]
+  // ])
+  // .on("zoom", zoomed);
     
-  function zoomed() {
-    currentTransform = d3.event.transform;
-    view.attr("transform", currentTransform);
-    gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
-    gY.call(yAxis.scale(d3.event.transform.rescaleY(yScale)));
-  }
-  svg.call(zoom);
+  // function zoomed() {
+  //   currentTransform = d3.event.transform;
+  //   view.attr("transform", currentTransform);
+  //   gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
+  //   gY.call(yAxis.scale(d3.event.transform.rescaleY(yScale)));
+  // }
+  // svg.call(zoom);
   }    
   
 
@@ -198,9 +261,7 @@ function plotNormDistMulti(
           ticks = xScale.ticks(tickCount),
           tickFormat = xScale.tickFormat();
     
-      context.beginPath();
-  
-    
+
       context.beginPath();
       context.moveTo(0, height+yoffset);
       context.lineTo(width+tickSize, height+yoffset);
