@@ -8,10 +8,10 @@ Version: **0.01-alpha**
 ## UI Screenshot
 ![UI Screenshot](docs/mi_screen1.png "UI screenshot")
 
-
 ## Logger Usage
 
-### 1) Import and initialize inspector
+#### Import and initialize inspector
+
 ```python
 data_root = 'graph_web/session_data'
 session_id = "test"
@@ -20,8 +20,7 @@ from modelinspector.inspector import Inspector
 inspector = Inspector(session_id,data_root)
 ```
 
-
-### 2) Log within training loop
+#### Log within training loop
 
 ```python
 
