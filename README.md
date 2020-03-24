@@ -1,30 +1,57 @@
+# Model Inspector
 
-# Notes
+## Overview
+Model Inspector is a tool for observing the internals Deep Neural Network as it's trained over time.  It consists of two components: a python logging tool and a web based UI which visualizes the logged data. It currently works with basic Pytorch models and is in the very early stages of development.
+
+Version: **0.01-alpha**
+
+## UI Screenshot
+![UI Screenshot](docs/mi_screen1.png "UI screenshot")
+
+
+## Logger Usage
+
+### 1) Import and initialize inspector
+```python
+data_root = 'graph_web/session_data'
+session_id = "test"
+
+from modelinspector.inspector import Inspector
+inspector = Inspector(session_id,data_root)
+```
+
+
+### 2) Log within training loop
+
+```python
+
+# Log only peridocially
+if i % log_freq == 0:
+    inspector.log_state(epoch=epoch,
+                itr=i, 
+                model=model,
+                input_dict={'input.1':images},
+                output_dict={'output.1':output},
+                loss_dict={'loss':loss},
+                label_dict={'class_label':target})
+    progress.display(i)
+
+# Log every epoc
+inspector.log_metrics(
+    epoch=epoch,
+    itr=i, 
+    metrics={
+        'loss':loss.item(),
+        'acc1':acc1[0].item(),
+        'acc5':acc5[0].item()})
+
+```
+
+## Build on the following projects
+
+- cytoscape.js
+- d3.js
+- Pytorch
 
 ## Related Projects:
 * https://github.com/waleedka/hiddenlayer/
-
-## Trace/Graph for Torch
- - https://pytorch.org/docs/stable/_modules/torch/jit.html (TODO, use this instead)
-
-## Gradient Monitoring
-- https://discuss.pytorch.org/t/how-to-check-for-vanishing-exploding-gradients/9019
-- https://discuss.pytorch.org/t/check-gradient-flow-in-network/15063/6
-- https://gist.github.com/apaszke/f93a377244be9bfcb96d3547b9bc424d
-
-
-## Graph Libs
-- https://js.cytoscape.org/ <-- looks awesome
-    - https://github.com/cytoscape/cytoscape.js/tree/unstable/documentation/demos
-- graphviz 
-- https://bl.ocks.org/magjac/28a70231e2c9dddb84b3b20f450a215f
-- d3
-- dagre (tensorboard)
-    - looks awesome: https://dagrejs.github.io/project/dagre-d3/latest/demo/    interactive-demo.html
-
-# cytoscape
--https://github.com/cytoscape/cyjs-sample/wiki/Build-Sample-Project
-
-# Alternative to graph algos
-- https://en.wikipedia.org/wiki/Placement_(electronic_design_automation)
-- https://cgi.csc.liv.ac.uk/~epa/surveyhtml.html
