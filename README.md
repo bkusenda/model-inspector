@@ -1,7 +1,7 @@
 # Model Inspector
 
 ## Overview
-Model Inspector is a tool for observing the internals Deep Neural Network as it's trained over time.  It consists of two components: a python logging tool and a web based UI which visualizes the logged data. It currently works with basic Pytorch models and is in the very early stages of development.
+Model Inspector is a tool for visualizing a Deep Neural Network's internal's as throughout training.  It consists of two components: a python logging tool and a web based UI which visualizes the logged data. It currently works with basic Pytorch models and is in the very early stages of development.
 
 Version: **0.01-alpha**
 
