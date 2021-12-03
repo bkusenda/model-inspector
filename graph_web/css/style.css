@@ -116,3 +116,22 @@ p.image_caption {
 .side-wrapper-scroll-y {
     display: block;
 }
+.link_div{
+    cursor: pointer; 
+}
+
+.slider{
+    width:100%;
+}
+
+#playerCanvas{
+    padding: 0;
+    margin: auto;
+    display: block;
+
+}
+
+#additional_info{
+    max-height: 400px;
+    overflow-y: auto;
+}

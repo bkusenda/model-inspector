@@ -729,7 +729,7 @@ function plotMultiStatsOverTime(
     context.beginPath();
     area(data);
     context.lineWidth = 1;
-    context.globalAlpha = 0.2;
+    context.globalAlpha = 0.6;
     context.fillStyle = 'steelblue';
     context.fill();
     context.closePath();

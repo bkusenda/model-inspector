@@ -66,22 +66,22 @@ var imageTypeElData = {
 
 //STORAGE HELPERS
 var defaultScalars = {
-  'cy-layout': 'grid',
-  'cy-font-size': 50,
-  'cy-node-width': 460,
-  'cy-node-height': 460,
-  'cy-edge-size': 10,
-  'play_mode': 'stop',
-  'active_image': 'tensor',
-  'node_render_type': 'fixed',
-  'session_path': "session_data",
-  'session_id': PARAMS.session_id,
-  'state_id': "0_0",
-  'state_idx': 0,
-  'current_image_type': 'session_stats',
-  'nonParamNodeSelector': 'node[label="Add"],node[label="Flatten"],node[label="MaxPool"],node[label="Relu"],node[label="Softmax"],node[label="Constant"],node[label="Reshape"]',
-  'selected_node_id': -1,
-  'selected_node_label': ""
+    'cy-layout': 'grid',
+    'cy-font-size': 50,
+    'cy-node-width': 460,
+    'cy-node-height': 460,
+    'cy-edge-size': 10,
+    'play_mode': 'stop',
+    'active_image': 'tensor',
+    'node_render_type': 'fixed',
+    'session_path': "session_data",
+    'session_id': PARAMS.session_id,
+    'state_id': PARAMS.state_id || "0_0",
+    'state_idx': 0,
+    'current_image_type': 'session_stats',
+    'nonParamNodeSelector': 'node[label="Add"],node[label="Flatten"],node[label="MaxPool"],node[label="Relu"],node[label="Softmax"],node[label="LogSoftmax"],node[label="Constant"],node[label="Reshape"]',
+    'selected_node_id': -1,
+    'selected_node_label': ""
 }
 
 var defaultJSON = {
@@ -161,6 +161,10 @@ function getDefaultValue(key) {
 
 function getSessionPath() {
   return `${getStorageValue('session_path')}/${getStorageValue('session_id')}`
+}
+
+function getStatePathFor(stateId) {
+  return `${getSessionPath()}/${stateId}`;
 }
 
 function getStatePath() {
@@ -515,6 +519,78 @@ function updateRadioButtons(eleData, currVal) {
   }
 }
 
+function playImages(comp,typ){
+    let stateIds = getCurrentSessionData()['state_ids'];
+    var totalImages = stateIds.length;
+    let canvasId = 'playerCanvas';
+    let canvas = document.getElementById('playerCanvas');
+    let ctx = canvas.getContext('2d');
+    let first = true;
+    const imageList= [];
+    let imagesReady = 0
+    for (let stateId of stateIds){
+         
+        const image = new Image();
+        var image_path = `${getStatePathFor(stateId)}/images/${comp}_${typ}__image.jpg`;
+        imageList.push(image);
+        function prepimage(){
+          if (first){
+                first=false;
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+            }
+            imagesReady++;
+         }
+        image.onload = prepimage;
+        image.src = image_path;
+     }
+    
+    var intervalms = Math.round((5/totalImages)*1000);
+    document.getElementById('stateValue').max = totalImages-1
+    var loaded =false;
+    function drawImages(canvasId){
+        if (!loaded && imagesReady>=totalImages){
+            loaded = true;
+            if(document.getElementById("playValue").value === "true"){
+                document.getElementById("playButton").innerHTML="Stop";
+            }
+            else{
+                document.getElementById("playButton").innerHTML="Play";
+            }
+            
+        } else {
+            let currentIdx =document.getElementById('stateValue').value;
+            let img = imageList[currentIdx];
+            ctx.drawImage(img,0,0);
+            ctx.fillText("State Id: " + stateIds[currentIdx], 5, 15); 
+           if (document.getElementById('playValue').value === "true"){
+                currentIdx++;
+                currentIdx = currentIdx % totalImages;
+            }
+            document.getElementById('stateValue').value = currentIdx
+
+        }
+    }
+    
+    
+    let intervalId = setInterval(function() {
+                            drawImages(canvasId)},
+                            intervalms);
+    return intervalId
+
+}
+
+function loadPlayer(comp,typ){
+    $('#playerModal').modal('show');
+    $('#stateRange').value = 0
+    document.getElementById("playButton").innerHTML="Loading";
+    document.getElementById("playValue").value = false;
+    let intervalId = playImages(comp,typ);
+    $('#playerModal').on('hidden.bs.modal', function (e) {
+        clearInterval(intervalId)  
+    })
+}
+
 function updateSideBar() {
   /*
   on node click update node info
@@ -551,7 +627,7 @@ function updateSideBar() {
     <h4>${comp}: ${component_info[comp].data_group_type}</h4>
     <table class="table table-sm collapse table-stats">
     <tr><td>Type: </td><td><b>${component_info[comp].data_group_type}</b></td></tr>
-    <tr><td>Shape:</td><td> (${component_info[comp].shape})</td></tr>`];
+    <tr><td>Shape: </td><td> (${component_info[comp].shape})</td></tr>`];
 
     component_html.push(`<ul>`);
     for (const stat in stats) {
@@ -564,12 +640,26 @@ function updateSideBar() {
     // html_list.push('</div></div>')
     // html_list.push(`<div class="row"><div class="col">`)
     html_list.push(component_html.join("\n"));
+
     var image_path = `${getStatePath()}/images/${comp}_tensor__image.jpg`
-    html_list.push(`<div class="image_holder"> <img class="side_data" src="${image_path}"/><p class="image_caption">Heatmap</p></div>`);
+    
+    html_list.push(`<div class="image_holder link_div" id="play_${comp}_tensor"> <img class="side_data" src="${image_path}"/><p class="image_caption">Heatmap</p></div>`);
+      
+    actionList.push(function () {  
+            document.getElementById(`play_${comp}_tensor`).addEventListener("click", function() {
+            loadPlayer(comp,"tensor");
+        });
+    }) 
+// Disabled for now      
     if (node_label != 'INPUT')
       {
         var image_path = `${getStatePath()}/images/${comp}_first_delta__image.jpg`
-        html_list.push(`<div class="image_holder"> <img class="side_data" src="${image_path}"/><p class="image_caption">Delta Heatmap (total change in parameters)</p></div>`);
+        html_list.push(`<div class="image_holder link_div" id="play_${comp}_first_delta"><img class="side_data" src="${image_path}"/><p class="image_caption">Delta Heatmap (total change in parameters)</p></div>`);
+        actionList.push(function () {  
+            document.getElementById(`play_${comp}_first_delta`).addEventListener("click", function() {
+            loadPlayer(comp,"first_delta");
+        });
+    }); 
       }
     html_list.push(`<div class="image_holder"><div id="${comp}Canvas1"></div><p class="image_caption">Histogram of current state</p></div>`);
     html_list.push(`<div class="image_holder"><div id="${comp}StatsOverSessionCanvas1"></div><p class="image_caption" >Mean/Variance across session</p></div>`);
@@ -617,8 +707,13 @@ function updateSideBar() {
       html_list.push(`<div class="row"><div class="col">`)
 
       var image_path = `${getStatePath()}/images/${comp}_grad__image.jpg`
-      html_list.push(`<div class="image_holder"><div><img  class="side_data" src="${image_path}"/></div><p class="image_caption">Heatmap</p></div>`);
+      html_list.push(`<div class="image_holder link_div" id="play_${comp}_grad"><div><img  class="side_data" src="${image_path}"/></div><p class="image_caption">Heatmap</p></div>`);
 
+        actionList.push(function () {  
+            document.getElementById(`play_${comp}_grad`).addEventListener("click", function() {
+            loadPlayer(comp,"grad");
+        });
+    }) 
       html_list.push(`<div class="image_holder"><div id="${comp}Canvas2"></div><p class="image_caption">Histogram of current state</p></div>`);
       html_list.push(`<div class="image_holder"><div id="${comp}StatsOverSessionCanvas2"></div><p class="image_caption">Mean/Variance across session</p></div>`);
 
@@ -733,6 +828,21 @@ const changeStateById = async (stateId) => {
   }
 }
 
+function renderAdditionalInfo(){
+  let addInfo = getCurrentState()['additional_info'];
+  var html_list = [];
+
+  if ( Object.keys(addInfo).length > 0){
+   
+    html_list.push(`<table class="table table-sm  table-stats">`)
+    for (const [key, value] of Object.entries(addInfo)) {
+      html_list.push(`<tr><td>${key}:</td><td>${value.value}</td></tr>`);
+    }
+    html_list.push("</table>")
+  }
+  document.getElementById("additional_info").innerHTML = html_list.join("\n");
+}
+
 const changeStateByIdx = async (stateIdx) => {
   let stateIds = getCurrentSessionData()['state_ids']
   if (stateIdx < 0 || stateIdx >= stateIds.length) {
@@ -745,6 +855,7 @@ const changeStateByIdx = async (stateIdx) => {
   await renderNodeImages();
   window.updateGraphSelected(newStateId)
   document.getElementById("state_info").innerHTML = `State ID: ${newStateId}, Session ID: ${PARAMS.session_id}`
+  renderAdditionalInfo()
 }
 
 const initSession = async () => {
@@ -895,4 +1006,18 @@ document.getElementById("next_state_btn").addEventListener("click", async () => 
 document.getElementById("prev_state_btn").addEventListener("click", async () => {
   await changeStateByIdx(+getStorageValue('state_idx') - 1);
   updateSideBar();
+});
+
+
+document.getElementById("playButton").addEventListener("click", () => {
+    var playing = document.getElementById("playValue").value === 'true';
+    document.getElementById("playValue").value = !playing;
+    playing = document.getElementById("playValue").value === 'true';
+    if (playing){
+        document.getElementById("playButton").innerHTML="Stop";
+
+    }else{
+        document.getElementById("playButton").innerHTML="Play";
+    }
+
 });

@@ -1,138 +1,162 @@
 <!DOCTYPE html>
 <html>
 
-    <head>
-        <link href="css/cytoscape-context-menus.css" rel="stylesheet" type="text/css" />
-        <link href="css/bootstrap.min.css" rel='stylesheet' />
-        <link href="css/style.css" rel="stylesheet" />
+<head>
+    <link href="css/cytoscape-context-menus.css" rel="stylesheet" type="text/css" />
+    <link href="css/bootstrap.min.css" rel='stylesheet' />
+    <link href="css/style.css" rel="stylesheet" />
 
-        <meta charset=utf-8 />
-        <meta name="viewport" content="user-scalable=no, initial-scale=1.0,
+    <meta charset=utf-8 />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0,
 minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-        <script src="js/jquery-3.4.1.min.js"></script>
-        <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script src="js/cytoscape.min.js"></script>
-        <script src="js/dagre.min.js"></script>
-        <script src="js/cytoscape-dagre.js"></script>
-        <script src="js/cytoscape-node-html-label.min.js"></script>
-        <script src="js/cytoscape-context-menus.js"></script>
-        <script src="js/cytoscape-cxtmenu.js"></script>
-        <script src="js/bootstrap.bundle.min.js"></script>
-        <script src="charts.js"></script>
-        <title>Model Inspector</title>
-    </head>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="js/cytoscape.min.js"></script>
+    <script src="js/dagre.min.js"></script>
+    <script src="js/cytoscape-dagre.js"></script>
+    <script src="js/cytoscape-node-html-label.min.js"></script>
+    <script src="js/cytoscape-context-menus.js"></script>
+    <script src="js/cytoscape-cxtmenu.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="charts.js"></script>
+    <title>Model Inspector</title>
+</head>
 
-    <body>
-        <!-- Modal -->
-<div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="aboutModalLongTitle">About</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-            <p>
-                This is a UI component for the Model Inspector a tool for visualization and debugging of Deep Neural Networks developed using <a href="">PyTorch</a>. 
-            </p>
-            <p>
-                <strong>Software:</strong> This was built on top of several opensource tools includiing: cytoscape.js, d3.js, jquery, bootstrap, pytorch, among others.
-            </p>
-            <hr/>
-        <a href="http://github.com/bkusenda/modelinspector">GITHUB: http://github.com/bkusenda/modelinspector</a>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Donate</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-  <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" >Help</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-            <div class="modal-body">
-                <p>The UI is composed of 3 part. Session Plot at the top, the network graph, and the node info side bar on the right.</p>
-    
-    
-                <p>Network Graph Legend: Green bordered node: is an input node. Red bordered is an output node</p>
-    
+<body>
+    <!-- Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aboutModalLongTitle">About</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        This is a UI component for the Model Inspector a tool for visualization and debugging of Deep
+                        Neural Networks developed using <a href="">PyTorch</a>.
+                    </p>
+                    <p>
+                        <strong>Software:</strong> This was built on top of several opensource tools includiing:
+                        cytoscape.js, d3.js, jquery, bootstrap, pytorch, among others.
+                    </p>
+                    <hr />
+                    <a href="http://github.com/bkusenda/modelinspector">Github:
+                        http://github.com/bkusenda/modelinspector</a>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!--           <button type="button" class="btn btn-primary">Donate</button> -->
+                </div>
             </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
     </div>
-  </div>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">Model Inspector</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-          
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav mr-auto">
+
+
+
+    <div class="modal fade " id="playerModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aboutModalLongTitle">Parameter Player</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="playerCanvas">
+                    </canvas>
+                    <input type="range" min="0" max="99" value="0" class="slider" id="stateValue">
+                    <button type="button" id="playButton">Play</button>
+                    <input id="playValue" type="hidden" value="false">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Help</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-body">
+                        <p>The UI is composed of 3 part. Session Plot at the top, the network graph, and the node info
+                            side bar on the right.</p>
+
+                        <p>Network Graph Legend: Green bordered node: is an input node. Red bordered is an output node
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Model Inspector</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
                 <!-- <li class="nav-item active">
                   <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
                 </li> -->
 
                 <li class="nav-item">
-                  <a class="nav-link" href="#" data-toggle="modal" data-target="#aboutModal" >About</a>
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#aboutModal">About</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-toggle="modal" data-target="#helpModal" >Help</a>
-                  </li>
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#helpModal">Help</a>
+                </li>
 
-              </ul>
-              <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+            </ul>
+            <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
                 <li class="nav-item">
-                    <a class="nav-link" href="#" >Version: 0.01-alpha</a>
-                  </li>
-              </ul>
-            </div>
-          </nav>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col">
-                    <div id="session_loss_plot">
-                    </div>
+                    <a class="nav-link" href="#">Version: 0.0.1-dev</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div id="session_loss_plot">
                 </div>
             </div>
-            <div class="row">
-                <div class="col">
-                    <div class="state_data" id="state_info"></div>
-                </div>
-            </div>
+        </div>
 
-            <div class="row">
-                <div class="col">
-                    <div class="form-group">
-                    <div class="input-group mb-3">
+        <div class="row mt-4">
+            <div class="col">
+                <div class="form-group">
+                    <div class="input-group mb-1">
                         <div class="input-group-prepend">
                             <label class="input-group-text" for="inputGroupSelect01">State: </label>
                         </div>
                         <div class="btn-group" role="group" aria-label="Change State">
-                        <button type="button" class="btn btn-secondary" id="prev_state_btn">Previous</button>
-                        <button type="button" class="btn btn-secondary" id="next_state_btn">Next</button>
-                      </div>
+                            <button type="button" class="btn btn-secondary" id="prev_state_btn">Previous</button>
+                            <button type="button" class="btn btn-secondary" id="next_state_btn">Next</button>
+                        </div>
                     </div>
                 </div>
-                </div>
-                <div class="col">
-                    <!-- <div class="form-group">
+                <div class="state_data" id="state_info"></div>
+
+            </div>
+            <div class="col">
+                <!-- <div class="form-group">
                         <div class="input-group mb-3">
 
                             <div class="input-group-prepend">
@@ -149,134 +173,149 @@ minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
                     </div> -->
 
 
-                    <div class="input-group mb-3">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn
+                <div class="input-group mb-3">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn
             btn-primary" id="default_view_btn">Reset View</button>
 
-                            <button type="button" class="btn
+                        <button type="button" class="btn
             btn-primary" id="reset_graph_btn">Reset Graph</button>
-                        </div>
                     </div>
-
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for="inputGroupSelect01">Label Size:</label>
-                        </div>
-                        <div class="input-group-append">
-                            <button type="button" class="btn btn-secondary" id="font_minus_btn">-</button>
-                            <button type="button" class="btn btn-secondary" id="font_plus_btn">+</button>
-                        </div>
-                    </div>
-
-
-
                 </div>
 
-                <div class="col">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="inputGroupSelect01">Label Size:</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-secondary" id="font_minus_btn">-</button>
+                        <button type="button" class="btn btn-secondary" id="font_plus_btn">+</button>
+                    </div>
+                </div>
 
-                    <div class="form-group">
-                        <div class="btn-toolbar">
-                            
-                            <div class="dropdown">
-                                <button class="btn btn-primary
-            dropdown-toggle" type="button" id="toggleNodeStatButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Change Layout
-        </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" href="#" id="layout_btn_grid">Grid</a>
-                                    <a class="dropdown-item" href="#" id="layout_btn_dagre">Dagre</a>
-                                    <a class="dropdown-item" href="#" id="layout_btn_cose">Cose</a>
-                                </div>
 
+
+            </div>
+
+            <div class="col">
+
+                <div class="form-group">
+                    <div class="btn-toolbar">
+
+                        <div class="dropdown">
+                            <button class="btn btn-primary
+            dropdown-toggle" type="button" id="toggleNodeStatButton" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                Change Layout
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#" id="layout_btn_grid">Grid</a>
+                                <a class="dropdown-item" href="#" id="layout_btn_dagre">Dagre</a>
+                                <a class="dropdown-item" href="#" id="layout_btn_cose">Cose</a>
                             </div>
 
                         </div>
+
                     </div>
+                </div>
 
-                    <div class="input-group mb-3">
+                <div class="input-group mb-3">
 
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn
             btn-secondary" id="show_params_only_btn">Show Params
-            Only</button>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="col">
-
-                    <div class="form-group">
-                        <h6>Node View Type</h6>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" value="" name="radio_node_view" id="hist_radio_btn">
-                            <label class="form-check-label" for="hist_radio_btn">Histograms</label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" value="" name="radio_node_view" id="session_stats_radio_btn">
-                            <label class="form-check-label" for="session_stats_radio_btn">Stats By Session</label>
-                        </div>
-
-                    </div>
-
-                </div>
-                <div class="col">
-                    <div class="form-group">
-
-                        <h6>Node Data Content</h6>
-
-                        <div class="form-check">
-                            <input class="form-check-input" name="radio_node_data" type="radio" value="" id="view_param_btn">
-                            <label class="form-check-label" for="view_param_btn">Parameter Values</label>
-                        </div>
-
-                        <div class="form-check">
-                            <input class="form-check-input" name="radio_node_data" type="radio" value="" id="view_grad_btn">
-                            <label class="form-check-label" for="view_grad_btn">Gradient Values</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" name="radio_node_data" type="radio" value="" id="view_buffer_btn">
-                            <label class="form-check-label" for="view_buffer_btn">Buffer Values</label>
-                        </div>
-                    </div>
-
-
-                </div>
-            </div>
-        </div>
-        </div>
-
-
-        <div class="container-fluid">
-            <div class="row">
-
-                <div class="col-8">
-
-
-                    <!-- graph : start -->
-
-                    <div id="cy-container">
-                        <div id="cy">
-
-                        </div>
-                    </div>
-
-                    <!-- graph : end -->
-
-                </div>
-
-                <div class="col-4">
-                    <div id="node_info" class="side-wrapper-scroll-y side-scrollbar">
+                            Only</button>
                     </div>
                 </div>
 
             </div>
-        </div>
-        <!-- container-fluid : end -->
-        <script src="code.js"></script>
+            <div class="col">
 
-        <!-- Load application code at the end to ensure DOM is loaded -->
-    </body>
+                <div class="form-group">
+                    <h6>Node View Type</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="" name="radio_node_view"
+                            id="hist_radio_btn">
+                        <label class="form-check-label" for="hist_radio_btn">Histograms</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="" name="radio_node_view"
+                            id="session_stats_radio_btn">
+                        <label class="form-check-label" for="session_stats_radio_btn">Stats By Session</label>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="col">
+                <div class="form-group">
+
+                    <h6>Node Data Content</h6>
+
+                    <div class="form-check">
+                        <input class="form-check-input" name="radio_node_data" type="radio" value=""
+                            id="view_param_btn">
+                        <label class="form-check-label" for="view_param_btn">Parameter Values</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" name="radio_node_data" type="radio" value="" id="view_grad_btn">
+                        <label class="form-check-label" for="view_grad_btn">Gradient Values</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" name="radio_node_data" type="radio" value=""
+                            id="view_buffer_btn">
+                        <label class="form-check-label" for="view_buffer_btn">Buffer Values</label>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-4">
+                
+                <h6>Additional State Info</h6>
+                <div id="additional_info"></div>
+            </div>
+        </div>
+  
+
+
+  
+    </div>
+
+    </div>
+
+
+    <div class="container-fluid">
+        <div class="row">
+
+            <div class="col-8">
+
+
+                <!-- graph : start -->
+
+                <div id="cy-container">
+                    <div id="cy">
+
+                    </div>
+                </div>
+
+                <!-- graph : end -->
+
+            </div>
+
+            <div class="col-4">
+                <div id="node_info" class="side-wrapper-scroll-y side-scrollbar">
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- container-fluid : end -->
+    <script src="code.js"></script>
+
+    <!-- Load application code at the end to ensure DOM is loaded -->
+</body>
 
 </html>
