@@ -3,11 +3,7 @@
 ## Overview
 Model Inspector is a tool for visualizing a Deep Neural Network's internal's throughout training.  It consists of two components: a python logging tool and a web based UI for visualizating the logged data. Model Inspector was developed to visualize the internal state of a deep learning model during training when watching loss alone may not be helpful.  This is the case for many reinforcement learning algorithms.
 
-*NOTE: While this tool may be helpful for some, it needs more work to be useful generally. At present, no additional improvements are planned.*
-
 Version: **0.01-dev**
-
-## [Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1) ##
 
 ## Features
 * Automatically parses NN architecture using pytorch ONNX export support
@@ -17,9 +13,22 @@ Version: **0.01-dev**
     * Heatmaps for parameters and parameter deltas (with animation over time)
     * Gradient and Parameter Histograms
     * Mean/Variance of parameters and gradients over time
-    
+
+## [Online Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1) ##
+
+<a target="_blank" href="http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1)"> <img src="docs/mi_screen1.png" alt="drawing" style="width:600px;"/></a>
+
+<br/>
+
+**Animation of the parameter delta (current value - initial values) changing over time.**
+
+<img src="docs/networkani.gif" alt="drawing" style="width:600px;"/>
+
+<br/>
 
 ## Limitations
+While this tool may be helpful for some, it needs more work to be useful generally. At present, no additional improvements are planned.
+
 * No easy way to compare multiple runs
 * No visualizations for activations (easy fix)
 * Ranges in heatmaps use value ranges within the sample since these images are generated at log time when global statists are not available.
@@ -27,25 +36,10 @@ Version: **0.01-dev**
 * Code not clean and bugs galore
 
 
-
-
-
-**UI screenshot**
-
-<img src="docs/mi_screen1.png" alt="drawing" style="width:800px;"/>
-
-
-**Animation of the parameter delta (current value - initial values) changing over time.**
-
-<img src="docs/networkani.gif" alt="drawing" style="width:600px;"/>
-
-
-
 ## Example Notebooks
 * [MINST](pytorch_minst.ipynb) ([Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1) )
 * [RESNET](pytorch_minst.ipynb) (requires ImageNet)
 
-### Installation
 
 ## Usage
 
@@ -99,7 +93,5 @@ if i % log_state_freq == 0:
 #### Web viewer
 
 - All files are static and can be statically served
-    - Example start webserver using python``` cd graph_web && python -m http.server 8001```
+- To start webserver using python run ``` python -m http.server 8001``` from the graph_web directory
 
-## Related Projects:
-* https://github.com/waleedka/hiddenlayer/
