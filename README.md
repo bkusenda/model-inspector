@@ -5,15 +5,6 @@ Model Inspector is a tool for visualizing a Deep Neural Network's internal's thr
 
 Version: **0.01-dev**
 
-## Features
-* Automatically parses NN architecture using pytorch ONNX export support
-* Interactive Web UI driven by static data files
-* Visualizations
-    * Neural Network Graph Visualization
-    * Heatmaps for parameters and parameter deltas (with animation over time)
-    * Gradient and Parameter Histograms
-    * Mean/Variance of parameters and gradients over time
-
 ## [Online Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1) ##
 
 <a target="_blank" href="http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1)"> <img src="docs/mi_screen1.png" alt="drawing" style="width:600px;"/></a>
@@ -26,6 +17,15 @@ Version: **0.01-dev**
 
 <br/>
 
+## Features
+* Automatically parses NN architecture using pytorch ONNX export support
+* Interactive Web UI driven by static data files
+* Visualizations
+    * Neural Network Graph Visualization
+    * Heatmaps for parameters and parameter deltas (with animation over time)
+    * Gradient and Parameter Histograms
+    * Mean/Variance of parameters and gradients over time
+
 ## Limitations
 While this tool may be helpful for some, it needs more work to be useful generally. At present, no additional improvements are planned.
 
@@ -37,7 +37,7 @@ While this tool may be helpful for some, it needs more work to be useful general
 
 
 ## Example Notebooks
-* [MINST](pytorch_minst.ipynb) ([Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1) )
+* [MINST](pytorch_minst.ipynb) ([Demo](http://bkusenda.github.io/mi/model_inspector.html?session_id=minst1))
 * [RESNET](pytorch_minst.ipynb) (requires ImageNet)
 
 
